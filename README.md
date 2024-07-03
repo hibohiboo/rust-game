@@ -1,3 +1,10 @@
+## 初回のみ
+
+```
+git config --local core.hooksPath .githooks && echo Changed hooks directory when npm install
+```
+
+
 ## How to install
 
 ```sh
