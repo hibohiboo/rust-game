@@ -56,6 +56,8 @@ fn sierpinsk(
 #[wasm_bindgen(start)]
 pub fn main_js() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();
+    let image = web_sys::HtmlImageElement::new().unwrap();
+    image.set_src("Idle(1).png");
 
     let window = web_sys::window().unwrap();
     let document = window.document().unwrap();
@@ -70,7 +72,7 @@ pub fn main_js() -> Result<(), JsValue> {
         .unwrap()
         .dyn_into::<web_sys::CanvasRenderingContext2d>()
         .unwrap();
-
+    context.draw_image_with_html_image_element(&image, 0.0, 0.0);
     sierpinsk(
         &context,
         [(300.0, 0.0), (0.0, 600.0), (600.0, 600.0)],

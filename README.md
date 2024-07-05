@@ -53,3 +53,12 @@ npm test -- --safari
 * The `static` folder contains any files that you want copied as-is into the final build. It contains an `index.html` file which loads the `index.js` file.
 
 * The `tests` folder contains your Rust unit tests.
+
+## 最新のパッケージ
+https://crates.io/search
+
+## 素材
+
+https://github.com/PacktPublishing/Game-Development-with-Rust-and-WebAssembly/wiki/Assets
+
+
