@@ -21,11 +21,13 @@ lto = true
 #default = ["wee_alloc"]
 
 [dependencies]
+wee_alloc = { version = "0.4.5", optional = true }
 wasm-bindgen = "0.2.92"
 console_error_panic_hook = "0.1.7"
 rand = "0.8.5"
 getrandom = { version = "0.2.15", features = ["js"] }
-wee_alloc = { version = "0.4.5", optional = true }
+futures = "0.3.30"
+wasm-bindgen-futures = "0.4.42"
 
 # The `web-sys` crate allows you to interact with the various browser APIs,
 # like the DOM.
@@ -36,6 +38,6 @@ features = ["console","Window","Document","HtmlCanvasElement","CanvasRenderingCo
 # These crates are used for running unit tests.
 [dev-dependencies]
 wasm-bindgen-test = "0.3.42"
-futures = "0.3.30"
+
 js-sys = "0.3.69"
-wasm-bindgen-futures = "0.4.42"
+

@@ -56,13 +56,7 @@ fn sierpinsk(
 #[wasm_bindgen(start)]
 pub fn main_js() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();
-    let image = web_sys::HtmlImageElement::new().unwrap();
-    let callback = Closure::once(||{
-        web_sys::console::log_1(&JsValue::from_str("Image loaded"));
-    });
-    image.set_onload(Some(callback.as_ref().unchecked_ref()));
-    callback.forget();
-    image.set_src("Idle (1).png");
+
 
     let window = web_sys::window().unwrap();
     let document = window.document().unwrap();
@@ -77,13 +71,25 @@ pub fn main_js() -> Result<(), JsValue> {
         .unwrap()
         .dyn_into::<web_sys::CanvasRenderingContext2d>()
         .unwrap();
-    context.draw_image_with_html_image_element(&image, 0.0, 0.0);
-    sierpinsk(
-        &context,
-        [(300.0, 0.0), (0.0, 600.0), (600.0, 600.0)],
-        (0, 255, 0),
-        5,
-    );
+    wasm_bindgen_futures::spawn_local(async move {
+        let (success_tx, success_rx) = futures::channel::oneshot::channel();
+        let image = web_sys::HtmlImageElement::new().unwrap();
+        let callback = Closure::once(||{
+            success_tx.send(());
+        });
+        image.set_onload(Some(callback.as_ref().unchecked_ref()));
+ 
+        image.set_src("Idle (1).png");
+        success_rx.await;
+        context.draw_image_with_html_image_element(&image, 0.0, 0.0);
+        sierpinsk(
+            &context,
+            [(300.0, 0.0), (0.0, 600.0), (600.0, 600.0)],
+            (0, 255, 0),
+            5,
+        );
+    });
+
 
     Ok(())
 }
