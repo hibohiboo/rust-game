@@ -57,7 +57,12 @@ fn sierpinsk(
 pub fn main_js() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();
     let image = web_sys::HtmlImageElement::new().unwrap();
-    image.set_src("Idle(1).png");
+    let callback = Closure::once(||{
+        web_sys::console::log_1(&JsValue::from_str("Image loaded"));
+    });
+    image.set_onload(Some(callback.as_ref().unchecked_ref()));
+    callback.forget();
+    image.set_src("Idle (1).png");
 
     let window = web_sys::window().unwrap();
     let document = window.document().unwrap();
