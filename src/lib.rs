@@ -129,6 +129,25 @@ pub fn main_js() -> Result<(), JsValue> {
         // JSONファイルをパースしてRustの構造体にする
         let sheet: Sheet = json.into_serde().expect("Failed to parse JSON");
         // 画像をHtmlImageElementに読み込む
+        let (success_tx, success_rx) = futures::channel::oneshot::channel::<Result<(), JsValue>>();
+        let success_tx = Rc::new(Mutex::new(Some(success_tx)));
+        let error_tx = Rc::clone(&success_tx);
+
+        let image = web_sys::HtmlImageElement::new().unwrap();
+        let callback = Closure::once(move||{
+            if let Some(success_tx) = success_tx.lock().ok().and_then(|mut opt| opt.take()) {
+                success_tx.send(Ok(()));
+            }
+        });
+        let error_callback = Closure::once(move|err|{
+            if let Some(error_tx) = error_tx.lock().ok().and_then(|mut opt| opt.take()) {
+                error_tx.send(Err(err));
+            }
+        });
+        image.set_onload(Some(callback.as_ref().unchecked_ref()));
+        image.set_onerror(Some(error_callback.as_ref().unchecked_ref()));
+        image.set_src("rhb.png");
+        success_rx.await;
         // 画像エレメントの一部だけを表示するようにしたバージョンのdrawImageを用いる
     });
 
