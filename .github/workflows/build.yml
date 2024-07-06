@@ -13,7 +13,7 @@ jobs:
         with:
           components: clippy
           target: wasm32-unknown-unknown
-      - uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@wasm-pack
       - name: Annotate commit with clippy warnings
         uses: giraffate/clippy-action@v1
         with:
