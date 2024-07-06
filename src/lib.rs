@@ -5,6 +5,28 @@ use rand::prelude::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+use serde::Deserialize;
+use std::collections::HashMap;
+
+#[derive(Deserialize)]
+struct Rect {
+    x: u64,
+    y: u64,
+    w: u64,
+    h: u64,
+}
+
+#[derive(Deserialize)]
+struct Cell {
+    frame: Rect,
+}
+
+#[derive(Deserialize)]
+struct Sheet {
+    frames: HashMap<String, Cell>,
+}
+
+
 fn draw_triangle(
     context: &web_sys::CanvasRenderingContext2d,
     points: [(f64, f64); 3],
@@ -101,8 +123,22 @@ pub fn main_js() -> Result<(), JsValue> {
             (0, 255, 0),
             5,
         );
+        // JSONファイルをロードする
+        let json = fetch_json("rhb.json").await.expect("Failed to fetch JSON");
+        // JSONファイルをパースしてRustの構造体にする
+        let sheet: Sheet = json.into_serde().expect("Failed to parse JSON");
+        // 画像をHtmlImageElementに読み込む
+        // 画像エレメントの一部だけを表示するようにしたバージョンのdrawImageを用いる
     });
 
 
     Ok(())
+}
+
+async fn fetch_json(json_path: &str) -> Result<JsValue, JsValue> {
+    let window = web_sys::window().unwrap();
+    let resp_value = wasm_bindgen_futures::JsFuture::from(window.fetch_with_str(json_path)).await?;
+    let resp: web_sys::Response = resp_value.dyn_into().unwrap();
+
+    wasm_bindgen_futures::JsFuture::from(resp.json()?).await
 }
