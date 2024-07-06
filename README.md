@@ -66,3 +66,17 @@ https://www.codeandweb.com/texturepacker
 
 ## 最終
 https://github.com/hibohiboo/Game-Development-with-Rust-and-WebAssembly
+
+## linter
+
+インストール
+```
+rustup component add clippy
+```
+
+実行
+
+```
+cargo clippy
+```
+
