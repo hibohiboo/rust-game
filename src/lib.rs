@@ -47,6 +47,11 @@ pub fn main_js() -> Result<(), JsValue> {
         .dyn_into::<web_sys::CanvasRenderingContext2d>()
         .unwrap();
     let interval_callback = Closure::wrap(Box::new(move || { }) as Box<dyn FnMut()>);
+    window.set_interval_with_callback_and_timeout_and_arguments_0(
+            interval_callback.as_ref().unchecked_ref(),
+            50,
+        );
+    interval_callback.forget();
     wasm_bindgen_futures::spawn_local(async move {
 
         // JSONファイルをロードする
