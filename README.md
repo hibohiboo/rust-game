@@ -64,3 +64,39 @@ https://github.com/PacktPublishing/Game-Development-with-Rust-and-WebAssembly/wi
 ## スプライト作成
 https://www.codeandweb.com/texturepacker
 
+## 最終
+https://github.com/hibohiboo/Game-Development-with-Rust-and-WebAssembly
+
+## linter
+
+インストール
+```
+rustup component add clippy
+```
+
+実行
+
+```
+cargo clippy
+```
+
+## デプロイ
+rust-toolchain.toml ... コンパイルに使用するRustのバージョンを指定
+
+## Netlify
+登録しておく。
+
+### ログイン
+```
+npx netlify login
+```
+### 準備
+
+```
+npx netlify init --manual
+```
+
+```
+npx netlify status
+```
+
