@@ -48,15 +48,20 @@ fn draw_triangle(
     context.fill();
 }
 
+fn midpoint(p1: (f64, f64), p2: (f64, f64)) -> (f64, f64) {
+    ((p1.0 + p2.0) / 2.0, (p1.1 + p2.1) / 2.0)
+}
+
 fn sierpinsk(
     context: &web_sys::CanvasRenderingContext2d,
     points: [(f64, f64); 3],
     color: (u8, u8, u8),
     depth: u8,
 ) {
-    if depth == 0 {
-        draw_triangle(context, points, color);
-    } else {
+    draw_triangle(context, points, color);
+    let depth = depth -1;
+    let [top, left, right] = points;
+    if depth > 0 {
         let mut rng = rand::thread_rng();
         let next_color = (
             rng.gen_range(0..255),
@@ -64,18 +69,18 @@ fn sierpinsk(
             rng.gen_range(0..255),
         );
 
-        let [top, left, right] = points;
-        let left_mid = ((top.0 + left.0) / 2.0, (top.1 + left.1) / 2.0);
-        let right_mid = ((top.0 + right.0) / 2.0, (top.1 + right.1) / 2.0);
-        let bottom_mid = ((left.0 + right.0) / 2.0, (left.1 + right.1) / 2.0);
+       
+        let left_mid = midpoint(top, left);
+        let right_mid = midpoint(top, right);
+        let bottom_mid = midpoint(left, right);
 
-        sierpinsk(context, [top, left_mid, right_mid], next_color, depth - 1);
-        sierpinsk(context, [left_mid, left, bottom_mid], next_color, depth - 1);
+        sierpinsk(context, [top, left_mid, right_mid], next_color, depth);
+        sierpinsk(context, [left_mid, left, bottom_mid], next_color, depth);
         sierpinsk(
             context,
             [right_mid, bottom_mid, right],
             next_color,
-            depth - 1,
+            depth,
         );
     }
 }
