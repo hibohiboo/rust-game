@@ -80,3 +80,23 @@ rustup component add clippy
 cargo clippy
 ```
 
+## デプロイ
+rust-toolchain.toml ... コンパイルに使用するRustのバージョンを指定
+
+## Netlify
+登録しておく。
+
+### ログイン
+```
+npx netlify login
+```
+### 準備
+
+```
+npx netlify init --manual
+```
+
+```
+npx netlify status
+```
+
