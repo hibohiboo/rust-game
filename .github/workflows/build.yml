@@ -3,8 +3,7 @@ on:
   push
 
 name: build
-permissions:
-  checks: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
