@@ -149,6 +149,18 @@ pub fn main_js() -> Result<(), JsValue> {
         image.set_src("rhb.png");
         success_rx.await;
         // 画像エレメントの一部だけを表示するようにしたバージョンのdrawImageを用いる
+        let sprite = sheet.frames.get("Run (1).png").expect("Cell not found in sheet");
+        context.draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
+            &image,
+            sprite.frame.x as f64,
+            sprite.frame.y as f64,
+            sprite.frame.w as f64,
+            sprite.frame.h as f64,
+            300.0,
+            300.0,
+            sprite.frame.w as f64,
+            sprite.frame.h as f64,
+        );
     });
 
 
