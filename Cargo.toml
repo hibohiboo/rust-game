@@ -22,14 +22,14 @@ lto = true
 
 [dependencies]
 wee_alloc = { version = "0.4.5", optional = true }
-wasm-bindgen = {version = "0.2.92", features=["serde-serialize"]}
+wasm-bindgen = {version = "0.2.92", features=[]}
 console_error_panic_hook = "0.1.7"
 rand = "0.8.5"
 getrandom = { version = "0.2.15", features = ["js"] }
 futures = "0.3.30"
 wasm-bindgen-futures = "0.4.42"
 serde = {version = "1.0.203", features=["derive"]}
-
+gloo-utils = {version="0.2.0", features=["serde"]}
 # The `web-sys` crate allows you to interact with the various browser APIs,
 # like the DOM.
 [dependencies.web-sys]

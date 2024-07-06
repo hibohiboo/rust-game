@@ -7,6 +7,7 @@ use wasm_bindgen::JsCast;
 
 use serde::Deserialize;
 use std::collections::HashMap;
+use gloo_utils::format::JsValueSerdeExt;
 
 #[derive(Deserialize)]
 struct Rect {
