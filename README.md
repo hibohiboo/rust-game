@@ -100,3 +100,17 @@ npx netlify init --manual
 npx netlify status
 ```
 
+
+## アーキテクチャ
+
+```mermaid
+  info
+```
+
+```mermaid
+graph TD;
+    game-->engine;
+    engine-->browser;
+```
+
+同じレイヤか、一段下のレイヤのものしか使えないとする
