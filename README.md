@@ -61,4 +61,6 @@ https://crates.io/search
 
 https://github.com/PacktPublishing/Game-Development-with-Rust-and-WebAssembly/wiki/Assets
 
+## スプライト作成
+https://www.codeandweb.com/texturepacker
 
