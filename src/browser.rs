@@ -23,3 +23,11 @@ pub fn canvas() -> Result<HtmlCanvasElement>{
         .dyn_into::<web_sys::HtmlCanvasElement>()
         .map_err(|element| anyhow!("Error convrting {:#?} to HtmlCanvasElement", element))
 }
+pub fn context() -> Result<CanvasRenderingContext2d>{
+    canvas()?
+        .get_context("2d")
+        .map_err(|js_value| anyhow!("Error getting 2d context {:#?}",js_value))?
+        .ok_or_else(|| anyhow!("Failed to get 2d context"))?
+        .dyn_into::<web_sys::CanvasRenderingContext2d>()
+        .map_err(|context| anyhow!("Error converting {:#?} to CanvasRenderingContext2d", context))
+}
