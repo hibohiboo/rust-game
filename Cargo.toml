@@ -30,6 +30,8 @@ futures = "0.3.30"
 wasm-bindgen-futures = "0.4.42"
 serde = {version = "1.0.203", features=["derive"]}
 gloo-utils = {version="0.2.0", features=["serde"]}
+anyhow = "1.0.86"
+
 # The `web-sys` crate allows you to interact with the various browser APIs,
 # like the DOM.
 [dependencies.web-sys]

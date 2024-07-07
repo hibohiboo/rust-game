@@ -102,7 +102,7 @@ mod tests { // 他のコードから隔離するため mod キーワードでモ
         };
 
         let rect2 = Rect {
-            position: Point { x: 100, y: 10 },
+            position: Point { x: 10, y: 10 },
             height: 100,
             width: 100,
         };
