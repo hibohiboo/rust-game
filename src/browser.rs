@@ -1,12 +1,18 @@
 use anyhow::{anyhow, Result};
-use wasm_bindgen::{JsCast, JsValue};
+use wasm_bindgen::{JsCast, JsValue,closure::WasmClosure, closure::WasmClosureFnOnce, prelude::Closure, };
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement, Response, Window};
+
 
 macro_rules! log {
     ($($t:tt)*) => {
         web_sys::console::log_1(&format!($($t)*).into());
     };
+}
+macro_rules! error {
+    ( $( $t:tt )* ) => {
+        web_sys::console::error_1(&format!( $( $t )* ).into());
+    }
 }
 
 pub fn window() -> Result<Window> {
@@ -59,4 +65,14 @@ pub async fn fetch_json(json_path: &str) -> Result<JsValue> {
     JsFuture::from(res.json().map_err(|err| anyhow!("Failed to get JSON: {:#?}", err))?,)   
         .await
         .map_err(|err| anyhow!("Failed to parse JSON: {:#?}", err))
+}
+
+pub fn new_image() -> Result<web_sys::HtmlImageElement> {
+    web_sys::HtmlImageElement::new().map_err(|err| anyhow!("Failed to create new image: {:#?}", err))
+}
+
+pub fn closure_once<F,A,R>(fn_once:F)->Closure<F::FnMut>
+where F: 'static + WasmClosureFnOnce<A,R>,
+{
+    Closure::once(fn_once)
 }
