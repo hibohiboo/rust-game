@@ -34,8 +34,7 @@ struct Sheet {
 pub fn main_js() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();
 
-    let window = browser::window().expect("No window found");
-    let document = window.document().unwrap();
+    let document = browser::document().expect("No document found");
     let canvas = document
         .get_element_by_id("canvas")
         .unwrap()
@@ -96,7 +95,7 @@ pub fn main_js() -> Result<(), JsValue> {
                 sprite.frame.h as f64,
             );
         }) as Box<dyn FnMut()>);
-        window.set_interval_with_callback_and_timeout_and_arguments_0(
+        browser::window().unwrap().set_interval_with_callback_and_timeout_and_arguments_0(
             interval_callback.as_ref().unchecked_ref(),
             50,
         );

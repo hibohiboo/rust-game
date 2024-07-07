@@ -10,3 +10,7 @@ macro_rules! log {
 pub fn window() -> Result<Window>{
     web_sys::window().ok_or_else(|| anyhow!("No Window Founc"))
 }
+
+pub fn document() -> Result<Document>{
+    window()?.document().ok_or_else(|| anyhow!("No Document Founc"))
+}
