@@ -34,24 +34,10 @@ struct Sheet {
 pub fn main_js() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();
 
-    let document = browser::document().expect("No document found");
-    let canvas = document
-        .get_element_by_id("canvas")
-        .unwrap()
-        .dyn_into::<web_sys::HtmlCanvasElement>()
-        .unwrap();
-    let context = canvas
-        .get_context("2d")
-        .unwrap()
-        .unwrap()
-        .dyn_into::<web_sys::CanvasRenderingContext2d>()
-        .unwrap();
+    let context = browser::context().expect("Failed to get canvas context");
 
-    wasm_bindgen_futures::spawn_local(async move {
-        // JSONファイルをロードする
-        let json = fetch_json("rhb.json").await.expect("Failed to fetch JSON");
-        // JSONファイルをパースしてRustの構造体にする
-        let sheet: Sheet = json.into_serde().expect("Failed to parse JSON");
+    browser::spawn_local(async move {
+        let sheet: Sheet = browser::fetch_json("rhb.json").await.expect("Count not fetch rhb.json").into_serde().expect("Could not parse rhb.json");
         // 画像をHtmlImageElementに読み込む
         let (success_tx, success_rx) = futures::channel::oneshot::channel::<Result<(), JsValue>>();
         let success_tx = Rc::new(Mutex::new(Some(success_tx)));
