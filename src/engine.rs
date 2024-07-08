@@ -248,3 +248,17 @@ impl Renderer {
         ).expect("Drawing is thrown exceptions! Unrecoverable error.");
     }
 }
+
+/**
+ * Prepare input events
+ * ※canvas要素にはtabIndex属性がついておりキーボードイベントを取得できる前提とする。
+ */
+fn prepare_input (){
+    let onkeydown = browser::closure_wrap( Box::new(move | keycode: web_sys::KeyboardEvent|{}) as Box<dyn FnMut(web_sys::KeyboardEvent)>);
+    let onkeyup = browser::closure_wrap( Box::new(move | keycode: web_sys::KeyboardEvent|{}) as Box<dyn FnMut(web_sys::KeyboardEvent)>);    
+
+    browser::canvas().unwrap().set_onkeydown(Some(onkeydown.as_ref().unchecked_ref()));
+    browser::canvas().unwrap().set_onkeyup(Some(onkeyup.as_ref().unchecked_ref()));
+    onkeydown.forget();
+    onkeyup.forget();
+}
