@@ -2,14 +2,10 @@
 mod browser;
 mod engine;
 mod game;
-use std::rc::Rc;
-use std::sync::Mutex;
 
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-
-use gloo_utils::format::JsValueSerdeExt;
+use engine::GameLoop;
 use serde::Deserialize;
+use wasm_bindgen::prelude::*;
 use std::collections::HashMap;
 
 #[derive(Deserialize)]

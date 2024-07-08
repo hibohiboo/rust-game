@@ -1,6 +1,11 @@
-use create::engine::{Game, Renderer};
+use std::collections::HashMap;
+
+use crate::{browser, engine::{self, Game, Rect, Renderer}};
 use anyhow::Result;
 use async_trait::async_trait;
+use gloo_utils::format::JsValueSerdeExt;
+use serde::Deserialize;
+use web_sys::HtmlImageElement;
 
 
 #[derive(Deserialize)]
@@ -35,6 +40,8 @@ impl WalkTheDog {
         }
     }
 }
+
+#[async_trait(?Send)]
 impl Game for WalkTheDog {
     async fn initialize(&self) -> Result<Box<dyn Game>> {
         let sheet = browser::fetch_json("rhb.json").await?.into_serde()?;
@@ -56,23 +63,23 @@ impl Game for WalkTheDog {
         let current_sprite = (self.frame/3)+1;
         let frame_name = format!("Run ({}).png", current_sprite);
         let sprite = self.sheet.as_ref().and_then(|sheet| sheet.frames.get(&frame_name)).expect("Cell not found in sheet");
-        renderer.clear(Rect {
+        renderer.clear(&Rect {
             x: 0.0,
             y: 0.0,
-            w: 600.0,
-            h: 600.0,
+            width: 600.0,
+            height: 600.0,
         });
         self.image.as_ref().map(|image| {
-            renderer.draw_image(&image, Rect {
+            renderer.draw_image(&image, &Rect {
                 x: sprite.frame.x.into(),
                 y: sprite.frame.y.into(),
-                w: sprite.frame.w.into(),
-                h: sprite.frame.h.into(),
-            }, Rect {
+                width: sprite.frame.w.into(),
+                height: sprite.frame.h.into(),
+            }, &Rect {
                 x: 300.0,
                 y: 300.0,
-                w: sprite.frame.w.into(),
-                h: sprite.frame.h.into(),
+                width: sprite.frame.w.into(),
+                height: sprite.frame.h.into(),
             });
         });
         
