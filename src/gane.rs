@@ -22,41 +22,46 @@ struct Sheet {
 }
 
 pub struct WalkTheDog{
-    image: HtmlImageElement,
-    sheet: Sheet,
+    image: Option<HtmlImageElement>,
+    sheet: Option<Sheet>,
     frame: u8,
 }
 
 impl Game for WalkTheDog {
     async fn initialize(&self) -> Result<Box<dyn Game>> {
-        Ok(Box::new(WalkTheDog{}))
+        let sheet: Sheet = browser::fetch_json("rhb.json").await.expect("Count not fetch rhb.json").into_serde().expect("Could not parse rhb.json");
+        let image = engine::load_image("rhb.png").await.expect("Could not load image");
+        Ok(Box::new(WalkTheDog{
+            image: Some(image),
+            sheet: Some(sheet),
+            frame: self.frame,
+        }))
     }
     fn update(&mut self) {
         // 何もしない
     }
     fn draw(&self, renderer: &Renderer) {
         let frame_name = format!("Run ({}).png", self.frame + 1);
-        let sprite = self.sheet
-            .frames
-            .get(&frame_name)
-            .expect("Cell not found in sheet");
-
+        let sprite = self.sheet.as_ref().and_then(|sheet| sheet.frames.get(&frame_name)).expect("Cell not found in sheet");
         renderer.clear(Rect {
             x: 0.0,
             y: 0.0,
             w: 600.0,
             h: 600.0,
         });
-        renderer.draw_image(&self.image, Rect {
-            x: sprite.frame.x.into(),
-            y: sprite.frame.y.into(),
-            w: sprite.frame.w.into(),
-            h: sprite.frame.h.into(),
-        }, Rect {
-            x: 300.0,
-            y: 300.0,
-            w: sprite.frame.w.into(),
-            h: sprite.frame.h.into(),
+        self.image.as_ref().map(|image| {
+            renderer.draw_image(&image, Rect {
+                x: sprite.frame.x.into(),
+                y: sprite.frame.y.into(),
+                w: sprite.frame.w.into(),
+                h: sprite.frame.h.into(),
+            }, Rect {
+                x: 300.0,
+                y: 300.0,
+                w: sprite.frame.w.into(),
+                h: sprite.frame.h.into(),
+            });
         });
+        
     }
 }
