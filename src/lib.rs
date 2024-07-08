@@ -1,6 +1,7 @@
 #[macro_use]
 mod browser;
 mod engine;
+mod game;
 use std::rc::Rc;
 use std::sync::Mutex;
 
