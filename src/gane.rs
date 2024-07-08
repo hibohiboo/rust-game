@@ -29,11 +29,11 @@ pub struct WalkTheDog{
 
 impl Game for WalkTheDog {
     async fn initialize(&self) -> Result<Box<dyn Game>> {
-        let sheet: Sheet = browser::fetch_json("rhb.json").await.expect("Count not fetch rhb.json").into_serde().expect("Could not parse rhb.json");
-        let image = engine::load_image("rhb.png").await.expect("Could not load image");
+        let sheet = browser::fetch_json("rhb.json").await?.into_serde()?;
+        let image = Some(engine::load_image("rhb.png").await?);
         Ok(Box::new(WalkTheDog{
-            image: Some(image),
-            sheet: Some(sheet),
+            image: image,
+            sheet: sheet,
             frame: self.frame,
         }))
     }
