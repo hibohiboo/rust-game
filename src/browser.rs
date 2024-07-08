@@ -76,3 +76,9 @@ where F: 'static + WasmClosureFnOnce<A,R>,
 {
     Closure::once(fn_once)
 }
+
+pub fn request_animation_frame(callback: &Closure<dyn FnMut()>) -> Result<i32> {
+    window()?
+        .request_animation_frame(callback.as_ref().unchecked_ref())
+        .map_err(|err| anyhow!("Failed to request animation frame: {:#?}", err))
+}
