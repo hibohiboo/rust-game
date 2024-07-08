@@ -179,20 +179,29 @@ pub trait Game {
     fn draw(&self, context: &CanvasRenderingContext2d);
 }
 
-pub struct GameLoop;
+const FRAME_SIZE: f32 = 1.0 / 60.0 * 1000.0;
+pub struct GameLoop {
+    last_frame: f64,
+    accumulated_delta: f32,
+}
 type SharedLoopClosure = Rc<Mutex<Option<LoopClosure>>>;
 
 impl GameLoop {
     pub async fn start(mut game: impl Game + 'static) -> Result<()> {
+        let mut game_loop = GameLoop {
+            last_frame: browser::now()?,
+            accumulated_delta: 0.0,
+        };
+        
         let f: SharedLoopClosure = Rc::new(Mutex::new(None));
         let g = f.clone();
-
-        *g.borrow_mut() = Some(browser::create_raf_closure(move |perf| {
+        *g.borrow_mut() = Some(browser::create_raf_closure(move |perf: f64| {
             game.update();
             game.draw(&browser::context().expect("Failed to get canvas context"));
 
-            browser::request_animation_frame(f.borrow().as_ref().unwra());
+            browser::request_animation_frame(f.borrow().as_ref().unwrap()).unwrap();
         }));
+
         browser::request_animation_frame(g.borrow().as_ref().ok_or_else(|| anyhow!("GameLoop: Loop is None"))?);
         Ok(())
     }
