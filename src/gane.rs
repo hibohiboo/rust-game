@@ -26,7 +26,15 @@ pub struct WalkTheDog{
     sheet: Option<Sheet>,
     frame: u8,
 }
-
+impl WalkTheDog {
+    pub fn new() -> Self {
+        WalkTheDog {
+            image: None,
+            sheet: None,
+            frame: 0,
+        }
+    }
+}
 impl Game for WalkTheDog {
     async fn initialize(&self) -> Result<Box<dyn Game>> {
         let sheet = browser::fetch_json("rhb.json").await?.into_serde()?;
@@ -38,10 +46,15 @@ impl Game for WalkTheDog {
         }))
     }
     fn update(&mut self) {
-        // 何もしない
+       if self.frame < 23 {
+           self.frame += 1;
+       } else {
+           self.frame = 0;
+       }
     }
     fn draw(&self, renderer: &Renderer) {
-        let frame_name = format!("Run ({}).png", self.frame + 1);
+        let current_sprite = (self.frame/3)+1;
+        let frame_name = format!("Run ({}).png", current_sprite);
         let sprite = self.sheet.as_ref().and_then(|sheet| sheet.frames.get(&frame_name)).expect("Cell not found in sheet");
         renderer.clear(Rect {
             x: 0.0,
