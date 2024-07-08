@@ -12,18 +12,17 @@ use wasm_bindgen::JsCast;
 // use wasm_bindgen_test::__rt::browser;
 use async_trait::async_trait;
 
-#[derive(Clone, Copy, Default)]
-pub struct Point {
-    pub x: i16,
-    pub y: i16,
-}
-
 pub struct Rect {
     pub x:f32,
     pub y:f32,
     pub width:f32,
     pub height:f32,
 }
+// #[derive(Clone, Copy, Default)]
+// pub struct Point {
+//     pub x: i16,
+//     pub y: i16,
+// }
 // #[derive(Default)]
 // pub struct Rect {
 //     pub position: Point,
@@ -218,9 +217,9 @@ impl GameLoop {
             game_loop.last_frame = perf;
             game.draw(&renderer);
 
-            browser::request_animation_frame(f.borrow().as_ref().unwrap());
+            let _ = browser::request_animation_frame(f.borrow().as_ref().unwrap());
         }));
-        browser::request_animation_frame(
+        let _ = browser::request_animation_frame(
             g.borrow().as_ref().ok_or_else(|| anyhow!("GameLoop: Loop is None"))?
         );
         Ok(())
