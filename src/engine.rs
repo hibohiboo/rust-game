@@ -194,6 +194,7 @@ type SharedLoopClosure = Rc<RefCell<Option<LoopClosure>>>;
 
 impl GameLoop {
     pub async fn start(game: impl Game + 'static) -> Result<()> {
+        let mut keyevent_receiver = prepare_input();
         let mut game = game.initialize().await?;
         let mut game_loop = GameLoop {
             last_frame: browser::now()?,
@@ -254,7 +255,9 @@ impl Renderer {
  * ※canvas要素にはtabIndex属性がついておりキーボードイベントを取得できる前提とする。
  */
 fn prepare_input (){
-    let onkeydown = browser::closure_wrap( Box::new(move | keycode: web_sys::KeyboardEvent|{}) as Box<dyn FnMut(web_sys::KeyboardEvent)>);
+    let onkeydown = browser::closure_wrap( Box::new(move | keycode: web_sys::KeyboardEvent|{
+        log!("{}", &format!("Key Down: {}", keycode.key()));
+    }) as Box<dyn FnMut(web_sys::KeyboardEvent)>);
     let onkeyup = browser::closure_wrap( Box::new(move | keycode: web_sys::KeyboardEvent|{}) as Box<dyn FnMut(web_sys::KeyboardEvent)>);    
 
     browser::canvas().unwrap().set_onkeydown(Some(onkeydown.as_ref().unchecked_ref()));
