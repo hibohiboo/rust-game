@@ -196,7 +196,13 @@ impl GameLoop {
         let f: SharedLoopClosure = Rc::new(Mutex::new(None));
         let g = f.clone();
         *g.borrow_mut() = Some(browser::create_raf_closure(move |perf: f64| {
-            game.update();
+            game_loop.accumulated_delta += (perf - game_loop.last_frame) as f32;
+            // game.drawに時間がかかると、updateが呼ばれる回数が減るため、その分を補填。描画を犠牲にして内部処理は確実に行うようにする。(drawを行わないupdateを行う)
+            while game_loop.accumulated_delta >= FRAME_SIZE {
+                game.update();
+                game_loop.accumulated_delta -= FRAME_SIZE;
+            }
+            game_loop.last_frame = perf;
             game.draw(&browser::context().expect("Failed to get canvas context"));
 
             browser::request_animation_frame(f.borrow().as_ref().unwrap()).unwrap();
