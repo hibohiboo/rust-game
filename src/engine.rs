@@ -1,6 +1,9 @@
+use crate::browser::LoopClosure;
 use crate::browser::{self};
+use web_sys::CanvasRenderingContext2d;
 use web_sys::HtmlImageElement;
 use anyhow::{anyhow, Result};
+use std::borrow::{Borrow, BorrowMut};
 use std::rc::Rc;
 use std::sync::Mutex;
 use futures::channel::{
@@ -168,5 +171,29 @@ mod tests { // 他のコードから隔離するため mod キーワードでモ
         };
 
         assert_eq!(rect2.intersects(&rect1), false);
+    }
+}
+
+pub trait Game {
+    fn update(&mut self);
+    fn draw(&self, context: &CanvasRenderingContext2d);
+}
+
+pub struct GameLoop;
+type SharedLoopClosure = Rc<Mutex<Option<LoopClosure>>>;
+
+impl GameLoop {
+    pub async fn start(mut game: impl Game + 'static) -> Result<()> {
+        let f: SharedLoopClosure = Rc::new(Mutex::new(None));
+        let g = f.clone();
+
+        *g.borrow_mut() = Some(browser::create_raf_closure(move |perf| {
+            game.update();
+            game.draw(&browser::context().expect("Failed to get canvas context"));
+
+            browser::request_animation_frame(f.borrow().as_ref().unwra());
+        }));
+        browser::request_animation_frame(g.borrow().as_ref().ok_or_else(|| anyhow!("GameLoop: Loop is None"))?);
+        Ok(())
     }
 }

@@ -77,8 +77,17 @@ where F: 'static + WasmClosureFnOnce<A,R>,
     Closure::once(fn_once)
 }
 
-pub fn request_animation_frame(callback: &Closure<dyn FnMut()>) -> Result<i32> {
+
+pub type LoopClosure = Closure<dyn FnMut()>;
+pub fn request_animation_frame(callback: &LoopClosure) -> Result<i32> {
     window()?
         .request_animation_frame(callback.as_ref().unchecked_ref())
         .map_err(|err| anyhow!("Failed to request animation frame: {:#?}", err))
+}
+pub fn create_raf_closure<F>(f: impl FnMut(f64) + 'static)->LoopClosure{
+    Closure::wrap(Box::new(f))
+}
+
+pub fn closure_wrap<T: WasmClosure + ?Sized>(data: Box<T>) -> Closure<T> {
+    Closure::wrap(data)
 }
