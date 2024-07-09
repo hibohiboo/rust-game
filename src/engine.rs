@@ -1,5 +1,6 @@
 use crate::browser::LoopClosure;
 use crate::browser::{self};
+use futures::channel::mpsc::{unbounded, UnboundedReceiver};
 use web_sys::CanvasRenderingContext2d;
 use web_sys::HtmlImageElement;
 use anyhow::{anyhow, Result};
@@ -249,19 +250,32 @@ impl Renderer {
         ).expect("Drawing is thrown exceptions! Unrecoverable error.");
     }
 }
+enum KeyPress {
+    KeyUp(web_sys::KeyboardEvent),
+    KeyDown(web_sys::KeyboardEvent),
+}
 
 /**
  * Prepare input events
  * ※canvas要素にはtabIndex属性がついておりキーボードイベントを取得できる前提とする。
  */
-fn prepare_input (){
+fn prepare_input () -> Result<UnboundedReceiver<KeyPress>>{
+    let (keydown_sender, keyevent_receiver) = unbounded();
+    let keydown_sender = Rc::new(RefCell::new(keydown_sender));
+    let keyup_sender = Rc::clone(&keydown_sender);
+
     let onkeydown = browser::closure_wrap( Box::new(move | keycode: web_sys::KeyboardEvent|{
         log!("{}", &format!("Key Down: {}", keycode.key()));
+        let _ = keydown_sender.borrow_mut().start_send(KeyPress::KeyDown(keycode));
     }) as Box<dyn FnMut(web_sys::KeyboardEvent)>);
-    let onkeyup = browser::closure_wrap( Box::new(move | keycode: web_sys::KeyboardEvent|{}) as Box<dyn FnMut(web_sys::KeyboardEvent)>);    
+
+    let onkeyup = browser::closure_wrap( Box::new(move | keycode: web_sys::KeyboardEvent|{
+        let _ = keyup_sender.borrow_mut().start_send(KeyPress::KeyUp(keycode));
+    }) as Box<dyn FnMut(web_sys::KeyboardEvent)>);    
 
     browser::canvas().unwrap().set_onkeydown(Some(onkeydown.as_ref().unchecked_ref()));
     browser::canvas().unwrap().set_onkeyup(Some(onkeyup.as_ref().unchecked_ref()));
     onkeydown.forget();
     onkeyup.forget();
+    Ok(keyevent_receiver)
 }
