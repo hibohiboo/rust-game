@@ -9,6 +9,9 @@ use gloo_utils::format::JsValueSerdeExt;
 use web_sys::HtmlImageElement;
 use self::red_hat_boy_states::*;
 
+const IDLE_FRAMES:u8 = 29;
+const RUN_FRAMES:u8 = 23;
+
 pub struct WalkTheDog {
     image: Option<HtmlImageElement>,
     sheet: Option<Sheet>,
@@ -152,7 +155,38 @@ enum RedHatBoyStateMachine {
     Idle(RedHatBoyState<Idle>),
     Running(RedHatBoyState<Running>),
 }
-
+impl RedHatBoyStateMachine {
+    fn transition(self, event: Event) -> Self {
+        match (self, event) {
+            (RedHatBoyStateMachine::Idle(state), Event::Run) => state.run().into(),
+            _ => self,
+        }
+    }
+    fn frame_name(&self) -> &str {
+        match self {
+            RedHatBoyStateMachine::Idle(state) => state.frame_name(),
+            RedHatBoyStateMachine::Running(state) => state.frame_name(),
+        }
+    }
+    fn context(&self) -> &RedHatBoyContext {
+        match self {
+            RedHatBoyStateMachine::Idle(state) => &state.context(),
+            RedHatBoyStateMachine::Running(state) => &state.context(),
+        }
+    }
+    fn update(self) -> Self {
+        match self {
+            RedHatBoyStateMachine::Idle(mut state) => {
+                state.context = state.context.update(IDLE_FRAMES);
+                RedHatBoyStateMachine::Idle(state);
+            }
+            RedHatBoyStateMachine::Running(mut state) => {
+                state.context = state.context.update(RUN_FRAMES);
+                RedHatBoyStateMachine::Running(state);
+            }
+        }
+    }
+}
 
 mod red_hat_boy_states {
     use crate::engine::Point;
@@ -176,6 +210,17 @@ mod red_hat_boy_states {
         pub frame: u8,
         pub position: Point,
         pub velocity: Point,
+    }
+
+    impl RedHatBoyContext {
+        pub fn update(mut self,frame_count:u8)->Self {
+            if self.frame < frame_count {
+                self.frame += 1;
+            }else {
+                self.frame = 0;
+            }
+            self
+        }
     }
 
     #[derive(Copy, Clone)]
@@ -225,40 +270,7 @@ pub enum Event {
     Run
 }
 
-impl RedHatBoyStateMachine {
-    fn transition(self, event: Event) -> Self {
-        match (self, event) {
-            (RedHatBoyStateMachine::Idle(state), Event::Run) => state.run().into(),
-            _ => self,
-        }
-    }
-    fn frame_name(&self) -> &str {
-        match self {
-            RedHatBoyStateMachine::Idle(state) => state.frame_name(),
-            RedHatBoyStateMachine::Running(state) => state.frame_name(),
-        }
-    }
-    fn context(&self) -> &RedHatBoyContext {
-        match self {
-            RedHatBoyStateMachine::Idle(state) => &state.context(),
-            RedHatBoyStateMachine::Running(state) => &state.context(),
-        }
-    }
-    fn update(self) -> Self {
-        match self {
-            RedHatBoyStateMachine::Idle(mut state) => {
-                if state.context.frame < 29 {
-                    state.context.frame += 1;
-                }else {
-                    state.context.frrame = 0
 
-                }
-                RedHatBoyStateMachine::Idle(state);
-            }
-            RedHatBoyStateMachine::Running(_) => self
-        }
-    }
-}
 impl From<RedHatBoyState<Running>> for RedHatBoyStateMachine {
     fn from(state: RedHatBoyState<Running>) -> Self {
         RedHatBoyStateMachine::Running(state)
