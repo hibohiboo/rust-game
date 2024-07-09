@@ -1,16 +1,12 @@
-
+use self::red_hat_boy_states::*;
 use crate::{
     browser,
-    engine::{self, Game, KeyState, Point, Rect, Renderer,Sheet},
+    engine::{self, Game, KeyState, Point, Rect, Renderer, Sheet},
 };
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use gloo_utils::format::JsValueSerdeExt;
 use web_sys::HtmlImageElement;
-use self::red_hat_boy_states::*;
-
-const IDLE_FRAMES:u8 = 29;
-const RUN_FRAMES:u8 = 23;
 
 pub struct WalkTheDog {
     image: Option<HtmlImageElement>,
@@ -41,10 +37,9 @@ impl Game for WalkTheDog {
             sheet: sheet.clone(),
             position: self.position,
             frame: self.frame,
-            rhb: Some(
-                RedHatBody::new(
-                    sheet.clone().ok_or_else(|| anyhow!("No Sheet Presents"))?,
-                    image.clone().ok_or_else(|| anyhow!("No Image Presents"))?
+            rhb: Some(RedHatBody::new(
+                sheet.clone().ok_or_else(|| anyhow!("No Sheet Presents"))?,
+                image.clone().ok_or_else(|| anyhow!("No Image Presents"))?,
             )),
         }))
     }
@@ -62,6 +57,7 @@ impl Game for WalkTheDog {
         }
         if keystate.is_pressed("ArrowRight") {
             velocity.x += 3;
+            self.rhb.as_mut().unwrap().run_right();
         }
 
         self.position.x += velocity.x;
@@ -125,10 +121,15 @@ impl RedHatBody {
 
     fn draw(&self, renderer: &Renderer) {
         let current_sprite = (self.state_machine.context().frame / 3) + 1;
-        let frame_name = format!("{} ({}).png", self.state_machine.frame_name(), current_sprite);
+        let frame_name = format!(
+            "{} ({}).png",
+            self.state_machine.frame_name(),
+            current_sprite
+        );
         let sprite = self
             .sprite_sheet
-            .frames.get(&frame_name)
+            .frames
+            .get(&frame_name)
             .expect("Cell not found in sheet");
         renderer.draw_image(
             &self.image,
@@ -148,7 +149,10 @@ impl RedHatBody {
     }
     fn update(&mut self) {
         self.state_machine = self.state_machine.update();
-        }
+    }
+    fn run_right(&mut self) {
+        self.state_machine = self.state_machine.transition(Event::Run);
+    }
 }
 #[derive(Copy, Clone)]
 enum RedHatBoyStateMachine {
@@ -177,11 +181,11 @@ impl RedHatBoyStateMachine {
     fn update(self) -> Self {
         match self {
             RedHatBoyStateMachine::Idle(mut state) => {
-                state.context = state.context.update(IDLE_FRAMES);
+                state.update();
                 RedHatBoyStateMachine::Idle(state);
             }
             RedHatBoyStateMachine::Running(mut state) => {
-                state.context = state.context.update(RUN_FRAMES);
+                state.update();
                 RedHatBoyStateMachine::Running(state);
             }
         }
@@ -192,6 +196,9 @@ mod red_hat_boy_states {
     use crate::engine::Point;
     const IDLE_FRAME_NAME: &str = "Idle";
     const RUN_FRAME_NAME: &str = "Run";
+    const IDLE_FRAMES: u8 = 29;
+    const RUNNING_FRAMES: u8 = 23;
+    const RUNNING_SPEED: i16 = 3;
 
     #[derive(Copy, Clone)]
     pub struct RedHatBoyState<S> {
@@ -213,12 +220,22 @@ mod red_hat_boy_states {
     }
 
     impl RedHatBoyContext {
-        pub fn update(mut self,frame_count:u8)->Self {
+        pub fn update(mut self, frame_count: u8) -> Self {
             if self.frame < frame_count {
                 self.frame += 1;
-            }else {
+            } else {
                 self.frame = 0;
             }
+            self.position.x += self.velocity.x;
+            self.position.y += self.velocity.y;
+            self
+        }
+        fn reset_frame(mut self) -> Self {
+            self.frame = 0;
+            self
+        }
+        fn run_right(mut self) -> Self {
+            self.velocity.x = RUNNING_SPEED;
             self
         }
     }
@@ -243,12 +260,15 @@ mod red_hat_boy_states {
         }
         pub fn run(self) -> RedHatBoyState<Running> {
             RedHatBoyState {
-                context: self.context,
+                context: self.context.reset_frame().run_right(),
                 _state: Running {},
             }
         }
         pub fn frame_name(&self) -> &str {
             IDLE_FRAME_NAME
+        }
+        pub fn update(&mut self) {
+            self.context = self.context.update(IDLE_FRAMES);
         }
     }
 
@@ -256,20 +276,20 @@ mod red_hat_boy_states {
         pub fn frame_name(&self) -> &str {
             RUN_FRAME_NAME
         }
+        pub fn update(&mut self) {
+            self.context = self.context.update(RUNNING_FRAMES);
+        }
     }
     #[derive(Copy, Clone)]
     enum RedHatBoyStateMachine {
         Idle(RedHatBoyState<Idle>),
         Running(RedHatBoyState<Running>),
     }
-
-
 }
 
 pub enum Event {
-    Run
+    Run,
 }
-
 
 impl From<RedHatBoyState<Running>> for RedHatBoyStateMachine {
     fn from(state: RedHatBoyState<Running>) -> Self {
