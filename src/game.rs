@@ -69,6 +69,7 @@ impl Game for WalkTheDog {
         } else {
             self.frame = 0;
         }
+        self.rhb.as_mut().unwrap().update();
     }
     fn draw(&self, renderer: &Renderer) {
         let current_sprite = (self.frame / 3) + 1;
@@ -141,8 +142,10 @@ impl RedHatBody {
                 height: sprite.frame.h.into(),
             },
         );
-
     }
+    fn update(&mut self) {
+        self.state_machine = self.state_machine.update();
+        }
 }
 #[derive(Copy, Clone)]
 enum RedHatBoyStateMachine {
@@ -239,6 +242,20 @@ impl RedHatBoyStateMachine {
         match self {
             RedHatBoyStateMachine::Idle(state) => &state.context(),
             RedHatBoyStateMachine::Running(state) => &state.context(),
+        }
+    }
+    fn update(self) -> Self {
+        match self {
+            RedHatBoyStateMachine::Idle(mut state) => {
+                if state.context.frame < 29 {
+                    state.context.frame += 1;
+                }else {
+                    state.context.frrame = 0
+
+                }
+                RedHatBoyStateMachine::Idle(state);
+            }
+            RedHatBoyStateMachine::Running(_) => self
         }
     }
 }
