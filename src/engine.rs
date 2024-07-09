@@ -5,6 +5,7 @@ use web_sys::CanvasRenderingContext2d;
 use web_sys::HtmlImageElement;
 use anyhow::{anyhow, Result};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Mutex;
 use futures::channel::oneshot::channel;
@@ -182,7 +183,7 @@ pub async fn load_image(source: &str) -> Result<HtmlImageElement> {
 #[async_trait(?Send)]
 pub trait Game {
     async fn initialize(&self) -> Result<Box<dyn Game>>;
-    fn update(&mut self);
+    fn update(&mut self,keystate: &KeyState);
     fn draw(&self, renderer: &Renderer);
 }
 
@@ -195,7 +196,7 @@ type SharedLoopClosure = Rc<RefCell<Option<LoopClosure>>>;
 
 impl GameLoop {
     pub async fn start(game: impl Game + 'static) -> Result<()> {
-        let mut keyevent_receiver = prepare_input();
+        let mut keyevent_receiver = prepare_input()?;
         let mut game = game.initialize().await?;
         let mut game_loop = GameLoop {
             last_frame: browser::now()?,
@@ -209,11 +210,14 @@ impl GameLoop {
         let f: SharedLoopClosure = Rc::new(RefCell::new(None));
         let g = f.clone();
 
+        let mut keystate = KeyState::new();
+
         *g.borrow_mut() = Some(browser::create_raf_closure(move |perf: f64| {
+            process_input(&mut keystate, &mut keyevent_receiver);
             game_loop.accumulated_delta += (perf - game_loop.last_frame) as f32;
             // game.drawに時間がかかると、updateが呼ばれる回数が減るため、その分を補填。描画を犠牲にして内部処理は確実に行うようにする。(drawを行わないupdateを行う)
             while game_loop.accumulated_delta > FRAME_SIZE {
-                game.update();
+                game.update(&keystate);
                 game_loop.accumulated_delta -= FRAME_SIZE;
             }
             game_loop.last_frame = perf;
@@ -253,6 +257,39 @@ impl Renderer {
 enum KeyPress {
     KeyUp(web_sys::KeyboardEvent),
     KeyDown(web_sys::KeyboardEvent),
+}
+
+pub struct KeyState{
+    pressed_keys: HashMap<String, web_sys::KeyboardEvent>,
+}
+impl KeyState {
+    pub fn new() -> Self {
+        KeyState {
+            pressed_keys: HashMap::new(),
+        }
+    }
+    pub fn is_pressed(&self, code: &str) -> bool {
+        self.pressed_keys.contains_key(code)
+    }
+    pub fn set_pressed(&mut self, code: &str, event: web_sys::KeyboardEvent) {
+        self.pressed_keys.insert(code.into(), event);
+    }
+    pub fn set_released(&mut self, code: &str) {
+        self.pressed_keys.remove(code);
+    }
+}
+fn process_input(state: &mut KeyState,keyevent_receiver: &mut UnboundedReceiver<KeyPress>) {
+    loop {
+        match keyevent_receiver.try_next() {
+            Ok(None) => break,
+            Err(_) => break,
+            Ok(Some(evt)) => match evt {
+                KeyPress::KeyUp(evt)=>state.set_released(&evt.code()),
+                KeyPress::KeyDown(evt)=>state.set_pressed(&evt.code(),evt),
+            },
+        }
+    }
+
 }
 
 /**
