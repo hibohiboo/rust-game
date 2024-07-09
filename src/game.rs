@@ -1,38 +1,20 @@
-use std::collections::HashMap;
 
 use crate::{
     browser,
-    engine::{self, Game, KeyState, Point, Rect, Renderer},
+    engine::{self, Game, KeyState, Point, Rect, Renderer,Sheet},
 };
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use gloo_utils::format::JsValueSerdeExt;
-use serde::Deserialize;
 use web_sys::HtmlImageElement;
-
-#[derive(Deserialize)]
-struct SheetRect {
-    x: i16,
-    y: i16,
-    w: i16,
-    h: i16,
-}
-
-#[derive(Deserialize)]
-struct Cell {
-    frame: SheetRect,
-}
-
-#[derive(Deserialize)]
-struct Sheet {
-    frames: HashMap<String, Cell>,
-}
+use self::red_hat_boy_states::*;
 
 pub struct WalkTheDog {
     image: Option<HtmlImageElement>,
     sheet: Option<Sheet>,
     frame: u8,
     position: Point,
+    rhb: Option<RedHatBody>,
 }
 impl WalkTheDog {
     pub fn new() -> Self {
@@ -41,6 +23,7 @@ impl WalkTheDog {
             sheet: None,
             frame: 0,
             position: Point { x: 0, y: 0 },
+            rhb: None,
         }
     }
 }
@@ -48,13 +31,18 @@ impl WalkTheDog {
 #[async_trait(?Send)]
 impl Game for WalkTheDog {
     async fn initialize(&self) -> Result<Box<dyn Game>> {
-        let sheet = browser::fetch_json("rhb.json").await?.into_serde()?;
+        let sheet: Option<Sheet> = browser::fetch_json("rhb.json").await?.into_serde()?;
         let image = Some(engine::load_image("rhb.png").await?);
         Ok(Box::new(WalkTheDog {
-            image: image,
-            sheet: sheet,
+            image: image.clone(),
+            sheet: sheet.clone(),
             position: self.position,
             frame: self.frame,
+            rhb: Some(
+                RedHatBody::new(
+                    sheet.clone().ok_or_else(|| anyhow!("No Sheet Presents"))?,
+                    image.clone().ok_or_else(|| anyhow!("No Image Presents"))?
+            )),
         }))
     }
     fn update(&mut self, keystate: &KeyState) {
@@ -121,17 +109,21 @@ struct RedHatBody {
     sprite_sheet: Sheet,
     image: HtmlImageElement,
 }
+impl RedHatBody {
+    fn new(sheet: Sheet, image: HtmlImageElement) -> Self {
+        RedHatBody {
+            state_machine: RedHatBoyStateMachine::Idle(RedHatBoyState::new()),
+            sprite_sheet: sheet,
+            image,
+        }
+    }
+}
 #[derive(Copy, Clone)]
 enum RedHatBoyStateMachine {
     Idle(RedHatBoyState<Idle>),
     Running(RedHatBoyState<Running>),
 }
 
-impl From<RedHatBoyState<Running>> for RedHatBoyStateMachine {
-    fn from(state: RedHatBoyState<Running>) -> Self {
-        RedHatBoyStateMachine::Running(state)
-    }
-}
 
 mod red_hat_boy_states {
     use crate::engine::Point;
@@ -150,11 +142,22 @@ mod red_hat_boy_states {
     }
 
     #[derive(Copy, Clone)]
-    struct Idle;
+    pub struct Idle;
     #[derive(Copy, Clone)]
-    struct Running;
+    pub struct Running;
+    const FLOOR: i16 = 479;
 
     impl RedHatBoyState<Idle> {
+        pub fn new() -> Self {
+            RedHatBoyState {
+                context: RedHatBoyContext {
+                    frame: 0,
+                    position: Point { x: 0, y: FLOOR },
+                    velocity: Point { x: 0, y: 0 },
+                },
+                _state: Idle {},
+            }
+        }
         pub fn run(self) -> RedHatBoyState<Running> {
             RedHatBoyState {
                 context: self.context,
@@ -169,18 +172,29 @@ mod red_hat_boy_states {
         Running(RedHatBoyState<Running>),
     }
 
-    pub enum Event {
-        Run,
-    }
 
-    impl RedHatBoyStateMachine {
-        fn transition(self, event: Event) -> Self {
-            match (self, event) {
-                (RedHatBoyStateMachine::Idle(state), Event::Run) => state.run().into(),
-                _ => self,
-            }
+}
+
+pub enum Event {
+    Run
+}
+
+impl RedHatBoyStateMachine {
+    fn transition(self, event: Event) -> Self {
+        match (self, event) {
+            (RedHatBoyStateMachine::Idle(state), Event::Run) => state.run().into(),
+            _ => self,
         }
     }
 }
+impl From<RedHatBoyState<Running>> for RedHatBoyStateMachine {
+    fn from(state: RedHatBoyState<Running>) -> Self {
+        RedHatBoyStateMachine::Running(state)
+    }
+}
 
-use self::red_hat_boy_states::*;
+impl From<RedHatBoyState<Idle>> for RedHatBoyStateMachine {
+    fn from(state: RedHatBoyState<Idle>) -> Self {
+        RedHatBoyStateMachine::Idle(state)
+    }
+}

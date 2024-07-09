@@ -1,6 +1,7 @@
 use crate::browser::LoopClosure;
 use crate::browser::{self};
 use futures::channel::mpsc::{unbounded, UnboundedReceiver};
+use serde::Deserialize;
 use web_sys::CanvasRenderingContext2d;
 use web_sys::HtmlImageElement;
 use anyhow::{anyhow, Result};
@@ -24,6 +25,24 @@ pub struct Rect {
 pub struct Point {
     pub x: i16,
     pub y: i16,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct SheetRect {
+    pub x: i16,
+    pub y: i16,
+    pub w: i16,
+    pub h: i16,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct Cell {
+    pub frame: SheetRect,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct Sheet {
+    pub frames: HashMap<String, Cell>,
 }
 // #[derive(Default)]
 // pub struct Rect {
