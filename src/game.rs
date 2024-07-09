@@ -101,6 +101,7 @@ impl Game for WalkTheDog {
                 },
             );
         });
+        self.rhb.as_ref().unwrap().draw(renderer);
     }
 }
 
@@ -118,7 +119,7 @@ impl RedHatBody {
         }
     }
 
-    fn draw(&self, renderer: Renderer) {
+    fn draw(&self, renderer: &Renderer) {
         let current_sprite = (self.state_machine.context().frame / 3) + 1;
         let frame_name = format!("{} ({}).png", self.state_machine.frame_name(), current_sprite);
         let sprite = self
