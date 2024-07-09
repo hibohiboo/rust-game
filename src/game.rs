@@ -60,16 +60,16 @@ impl Game for WalkTheDog {
     fn update(&mut self, keystate: &KeyState) {
         let mut velocity = Point { x: 0, y: 0 };
         // 同時押しに対応するため、elseを使わずifで分岐している
-        if (keystate.is_pressed("ArrowDown")) {
+        if keystate.is_pressed("ArrowDown") {
             velocity.y += 3;
         }
-        if (keystate.is_pressed("ArrowUp")) {
+        if keystate.is_pressed("ArrowUp") {
             velocity.y -= 3;
         }
-        if (keystate.is_pressed("ArrowLeft")) {
+        if keystate.is_pressed("ArrowLeft") {
             velocity.x -= 3;
         }
-        if (keystate.is_pressed("ArrowRight")) {
+        if keystate.is_pressed("ArrowRight") {
             velocity.x += 3;
         }
 
@@ -115,3 +115,38 @@ impl Game for WalkTheDog {
         });
     }
 }
+
+struct RedHatBody {
+    state_machine: RedHatBoyStateMachine,
+    sprite_sheet: Sheet,
+    image: HtmlImageElement
+}
+#[derive(Copy, Clone)]
+enum RedHatBoyStateMachine {
+    Idle(RedHatBoyState<Idle>),
+    Running(RedHatBoyState<Running>)
+}
+
+mod red_hat_boy_states {
+    use crate::engine::Point;
+
+    #[derive(Copy, Clone)]
+    pub struct RedHatBoyState<S> {
+        context: RedHatBoyContext,
+        _state: S
+    }
+
+    #[derive(Copy, Clone)]
+    pub struct RedHatBoyContext{
+        frame: u8,
+        position: Point,
+        velocity: Point
+    }
+
+    #[derive(Copy, Clone)]
+    struct Idle;
+    #[derive(Copy, Clone)]
+    struct Running;
+}
+
+use self::red_hat_boy_states::*;
