@@ -182,11 +182,11 @@ impl RedHatBoyStateMachine {
         match self {
             RedHatBoyStateMachine::Idle(mut state) => {
                 state.update();
-                RedHatBoyStateMachine::Idle(state);
+                RedHatBoyStateMachine::Idle(state)
             }
             RedHatBoyStateMachine::Running(mut state) => {
                 state.update();
-                RedHatBoyStateMachine::Running(state);
+                RedHatBoyStateMachine::Running(state)
             }
         }
     }
