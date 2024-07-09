@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{browser, engine::{self, Game, KeyState, Rect, Renderer}};
+use crate::{browser, engine::{self, Game, KeyState, Point, Rect, Renderer}};
 use anyhow::Result;
 use async_trait::async_trait;
 use gloo_utils::format::JsValueSerdeExt;
@@ -30,6 +30,7 @@ pub struct WalkTheDog{
     image: Option<HtmlImageElement>,
     sheet: Option<Sheet>,
     frame: u8,
+    position: Point,
 }
 impl WalkTheDog {
     pub fn new() -> Self {
@@ -37,6 +38,7 @@ impl WalkTheDog {
             image: None,
             sheet: None,
             frame: 0,
+            position: Point { x: 0, y: 0 },
         }
     }
 }
@@ -49,6 +51,7 @@ impl Game for WalkTheDog {
         Ok(Box::new(WalkTheDog{
             image: image,
             sheet: sheet,
+            position: self.position,
             frame: self.frame,
         }))
     }
@@ -76,8 +79,8 @@ impl Game for WalkTheDog {
                 width: sprite.frame.w.into(),
                 height: sprite.frame.h.into(),
             }, &Rect {
-                x: 300.0,
-                y: 300.0,
+                x: self.position.x.into(),
+                y: self.position.y.into(),
                 width: sprite.frame.w.into(),
                 height: sprite.frame.h.into(),
             });

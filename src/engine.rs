@@ -20,11 +20,11 @@ pub struct Rect {
     pub width:f32,
     pub height:f32,
 }
-// #[derive(Clone, Copy, Default)]
-// pub struct Point {
-//     pub x: i16,
-//     pub y: i16,
-// }
+#[derive(Clone, Copy, Default)]
+pub struct Point {
+    pub x: i16,
+    pub y: i16,
+}
 // #[derive(Default)]
 // pub struct Rect {
 //     pub position: Point,
