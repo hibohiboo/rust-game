@@ -119,12 +119,12 @@ impl Game for WalkTheDog {
 struct RedHatBody {
     state_machine: RedHatBoyStateMachine,
     sprite_sheet: Sheet,
-    image: HtmlImageElement
+    image: HtmlImageElement,
 }
 #[derive(Copy, Clone)]
 enum RedHatBoyStateMachine {
     Idle(RedHatBoyState<Idle>),
-    Running(RedHatBoyState<Running>)
+    Running(RedHatBoyState<Running>),
 }
 
 mod red_hat_boy_states {
@@ -133,20 +133,50 @@ mod red_hat_boy_states {
     #[derive(Copy, Clone)]
     pub struct RedHatBoyState<S> {
         context: RedHatBoyContext,
-        _state: S
+        _state: S,
     }
 
     #[derive(Copy, Clone)]
-    pub struct RedHatBoyContext{
+    pub struct RedHatBoyContext {
         frame: u8,
         position: Point,
-        velocity: Point
+        velocity: Point,
     }
 
     #[derive(Copy, Clone)]
     struct Idle;
     #[derive(Copy, Clone)]
     struct Running;
+
+    impl RedHatBoyState<Idle> {
+        pub fn run(self) -> RedHatBoyState<Running> {
+            RedHatBoyState {
+                context: self.context,
+                _state: Running {},
+            }
+        }
+    }
+
+    #[derive(Copy, Clone)]
+    enum RedHatBoyStateMachine {
+        Idle(RedHatBoyState<Idle>),
+        Running(RedHatBoyState<Running>),
+    }
+
+    pub enum Event {
+        Run,
+    }
+
+    impl RedHatBoyStateMachine {
+        fn transition(self, event: Event) -> Self {
+            match (self, event) {
+                (RedHatBoyStateMachine::Idle(state), Event::Run) => {
+                    RedHatBoyStateMachine::Running(state.run())
+                }
+                _ => self,
+            }
+        }
+    }
 }
 
 use self::red_hat_boy_states::*;
