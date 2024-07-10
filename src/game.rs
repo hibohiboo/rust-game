@@ -314,7 +314,7 @@ mod red_hat_boy_states {
         }
         pub fn land_on(self, position: f32) -> RedHatBoyState<Running> {
             RedHatBoyState {
-                context: self.context.reset_frame().set_on(position as i16),
+                context: self.context.set_on(position as i16),
                 _state: Running {},
             }
         }
@@ -444,6 +444,7 @@ impl RedHatBoyStateMachine {
             (RedHatBoyStateMachine::Running(state), Event::KnockOut) => state.knock_out().into(),
             (RedHatBoyStateMachine::Falling(state), Event::Update) => state.update().into(),
             (RedHatBoyStateMachine::Jumping(state), Event::Land(position)) => state.land_on(position).into(),
+            (RedHatBoyStateMachine::Running(state), Event::Land(position)) => state.land_on(position).into(),
             _ => self,
         }
     }
