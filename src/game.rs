@@ -260,6 +260,7 @@ mod red_hat_boy_states {
                 _state: Running {},
             }
         }
+
     }
     impl RedHatBoyState<Jumping>{
         pub fn frame_name(&self) -> &str {
@@ -267,13 +268,14 @@ mod red_hat_boy_states {
         }
         pub fn update(mut self) -> JumpingEndState {
             self.context = self.context.update(JUMPING_FRAMES);
-            if self.context.frame >= JUMPING_FRAMES {
-                JumpingEndState::Complete(self.stand())
+
+            if self.context.position.y >= FLOOR {
+                JumpingEndState::Complete(self.land())
             } else {
                 JumpingEndState::Jumping(self)
             }
         }
-        pub fn stand(self) -> RedHatBoyState<Running> {
+        pub fn land(self) -> RedHatBoyState<Running> {
             RedHatBoyState {
                 context: self.context.reset_frame(),
                 _state: Running {},
