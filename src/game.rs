@@ -9,8 +9,8 @@ use gloo_utils::format::JsValueSerdeExt;
 use web_sys::HtmlImageElement;
 
 const HEIGHT: i16 = 600;
-const LOW_PLATFORM: i16 = 420;
-const FIRST_PLATFORM: i16 = 370;
+const LOW_PLATFORM: i16 = 220;
+const FIRST_PLATFORM: i16 = 70;
 const HIGH_PLATFORM: i16 = 375;
 pub enum WalkTheDog {
     Loading,
@@ -267,6 +267,7 @@ mod red_hat_boy_states {
         }
         fn stop(mut self) -> Self {
             self.velocity.x = 0;
+            self.velocity.y = 0;
             self
         }
         fn set_on(mut self, position: i16) -> Self {
@@ -515,9 +516,7 @@ impl RedHatBoyStateMachine {
             RedHatBoyStateMachine::KnockedOut(state) => &state.context(),
         }
     }
-    fn knocked_out(&self) -> bool {
-        matches!(self, RedHatBoyStateMachine::KnockedOut(_))
-    }
+
     fn update(self) -> Self {
         self.transition(Event::Update)
     }
