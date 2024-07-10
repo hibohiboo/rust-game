@@ -65,13 +65,13 @@ impl Game for WalkTheDog {
                 walk.boy.jump();
             }
             walk.boy.update();
-            if walk.boy.bounding_box().intersects(&walk.platform.bounding_box()) {
+            if walk.boy.bounding_box().intersects(&walk.platform.destination_box()) {
                 if walk.boy.velocity_y() > 0 && walk.boy.pos_y() < walk.platform.position.y {
-                    walk.boy.land_on(walk.platform.bounding_box().y);
+                    walk.boy.land_on(walk.platform.destination_box().y);
                 }else {
                     walk.boy.knock_out();
                 }
-                walk.boy.land_on(walk.platform.bounding_box().y);
+                walk.boy.land_on(walk.platform.destination_box().y);
             }
             if walk.boy.bounding_box().intersects(&walk.stone.bounding_box()) { 
                 walk.boy.knock_out();
@@ -599,7 +599,7 @@ impl Platform {
             },
         );
     }
-    fn bounding_box(&self) -> Rect {
+    fn destination_box(&self) -> Rect {
         let platform = self.sheet.frames.get("13.png").expect("Cell not found");
         Rect {
             x: self.position.x.into(),
@@ -608,4 +608,5 @@ impl Platform {
             height: platform.frame.h.into(),
         }
     }
+
 }
