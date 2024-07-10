@@ -195,8 +195,9 @@ mod red_hat_boy_states {
         pub fn frame_name(&self) -> &str {
             IDLE_FRAME_NAME
         }
-        pub fn update(&mut self) {
+        pub fn update(mut self) -> Self {
             self.context = self.context.update(IDLE_FRAMES);
+            self
         }
     }
 
@@ -204,8 +205,9 @@ mod red_hat_boy_states {
         pub fn frame_name(&self) -> &str {
             RUN_FRAME_NAME
         }
-        pub fn update(&mut self) {
+        pub fn update(mut self) -> Self {
             self.context = self.context.update(RUNNING_FRAMES);
+            self
         }
         pub fn slide(self) -> RedHatBoyState<Sliding> {
             RedHatBoyState {
@@ -261,24 +263,7 @@ impl RedHatBoyStateMachine {
         }
     }
     fn update(self) -> Self {
-        match self {
-            RedHatBoyStateMachine::Idle(mut state) => {
-                state.update();
-                RedHatBoyStateMachine::Idle(state)
-            }
-            RedHatBoyStateMachine::Running(mut state) => {
-                state.update();
-                RedHatBoyStateMachine::Running(state)
-            }
-            RedHatBoyStateMachine::Sliding(mut state) => {
-                state.update(SLIDING_FRAMES);
-                if state.context().frame == SLIDING_FRAMES {
-                    RedHatBoyStateMachine::Running(state.stand())
-                } else {
-                    RedHatBoyStateMachine::Sliding(state)
-                }
-            }
-        }
+        self.transition(Event::Update)
     }
 }
 impl From<RedHatBoyState<Running>> for RedHatBoyStateMachine {
