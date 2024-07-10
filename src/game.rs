@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use gloo_utils::format::JsValueSerdeExt;
 use web_sys::HtmlImageElement;
 
-const HEIGHT:i16 = 600;
+const HEIGHT: i16 = 600;
 pub enum WalkTheDog {
     Loading,
     Loaded(Walk),
@@ -23,7 +23,7 @@ pub struct Walk {
     boy: RedHatBoy,
     background: Image,
     stone: Image,
-    platform: Platform
+    platform: Platform,
 }
 
 #[async_trait(?Send)]
@@ -37,7 +37,9 @@ impl Game for WalkTheDog {
                 let platform_sheet = browser::fetch_json("tiles.json").await?;
                 let platform = Platform::new(
                     platform_sheet.into_serde::<Sheet>()?,
-                    engine::load_image("tiles.png").await?, Point { x:200,y:200});
+                    engine::load_image("tiles.png").await?,
+                    Point { x: 200, y: 200 },
+                );
                 let rhb = RedHatBoy::new(
                     json.into_serde::<Sheet>()?,
                     engine::load_image("rhb.png").await?,
@@ -46,7 +48,7 @@ impl Game for WalkTheDog {
                     boy: rhb,
                     background: Image::new(background, Point { x: 0, y: 0 }),
                     stone: Image::new(stone, Point { x: 250, y: 546 }),
-                    platform
+                    platform,
                 })))
             }
             WalkTheDog::Loaded(_) => Err(anyhow!("Game already initialized")),
@@ -64,16 +66,23 @@ impl Game for WalkTheDog {
             if keystate.is_pressed("Space") {
                 walk.boy.jump();
             }
+
             walk.boy.update();
-            if walk.boy.bounding_box().intersects(&walk.platform.destination_box()) {
-                if walk.boy.velocity_y() > 0 && walk.boy.pos_y() < walk.platform.position.y {
-                    walk.boy.land_on(walk.platform.destination_box().y);
-                }else {
-                    walk.boy.knock_out();
+
+            for bounding_box in &walk.platform.bounding_boxes() {
+                if walk.boy.bounding_box().intersects(bounding_box) {
+                    if walk.boy.velocity_y() > 0 && walk.boy.pos_y() < walk.platform.position.y {
+                        walk.boy.land_on(bounding_box.y);
+                    } else {
+                        walk.boy.knock_out();
+                    }
                 }
-                walk.boy.land_on(walk.platform.destination_box().y);
             }
-            if walk.boy.bounding_box().intersects(&walk.stone.bounding_box()) { 
+            if walk
+                .boy
+                .bounding_box()
+                .intersects(&walk.stone.bounding_box())
+            {
                 walk.boy.knock_out();
             }
         }
@@ -131,7 +140,7 @@ impl RedHatBoy {
     fn bounding_box(&self) -> Rect {
         const X_OFFSET: f32 = 18.0;
         const Y_OFFSET: f32 = 14.0;
-        const WIDTH_OFFFSET:f32 = 28.0;
+        const WIDTH_OFFFSET: f32 = 28.0;
         let mut bounding_box = self.destination_box();
         bounding_box.x += X_OFFSET;
         bounding_box.y += Y_OFFSET;
@@ -151,7 +160,7 @@ impl RedHatBoy {
                 width: sprite.frame.w.into(),
                 height: sprite.frame.h.into(),
             },
-            &self.destination_box()
+            &self.destination_box(),
         );
     }
     fn update(&mut self) {
@@ -171,7 +180,7 @@ impl RedHatBoy {
     }
     fn land_on(&mut self, position: f32) {
         self.state_machine = self.state_machine.transition(Event::Land(position));
-    } 
+    }
     fn pos_y(&self) -> i16 {
         self.state_machine.context().position.y
     }
@@ -181,10 +190,10 @@ impl RedHatBoy {
 }
 
 mod red_hat_boy_states {
-    use crate::engine::Point;
     use super::HEIGHT;
+    use crate::engine::Point;
     const FLOOR: i16 = 479;
-    const PLAYER_HEIGHT: i16 = HEIGHT - FLOOR ;
+    const PLAYER_HEIGHT: i16 = HEIGHT - FLOOR;
     const STARTING_POINT: i16 = -20;
     const IDLE_FRAMES: u8 = 29;
     const IDLE_FRAME_NAME: &str = "Idle";
@@ -278,8 +287,6 @@ mod red_hat_boy_states {
 
     #[derive(Copy, Clone)]
     pub struct KnockedOut;
-
-
 
     impl RedHatBoyState<Idle> {
         pub fn new() -> Self {
@@ -390,7 +397,6 @@ mod red_hat_boy_states {
             }
         }
         pub fn land_on(self, position: f32) -> RedHatBoyState<Running> {
-   
             RedHatBoyState {
                 context: self.context.reset_frame().set_on(position as i16),
                 _state: Running {},
@@ -449,7 +455,7 @@ pub enum Event {
     Jump,
     KnockOut,
     Update,
-    Land(f32)
+    Land(f32),
 }
 #[derive(Copy, Clone)]
 enum RedHatBoyStateMachine {
@@ -474,9 +480,15 @@ impl RedHatBoyStateMachine {
             (RedHatBoyStateMachine::Jumping(state), Event::KnockOut) => state.knock_out().into(),
             (RedHatBoyStateMachine::Running(state), Event::KnockOut) => state.knock_out().into(),
             (RedHatBoyStateMachine::Falling(state), Event::Update) => state.update().into(),
-            (RedHatBoyStateMachine::Jumping(state), Event::Land(position)) => state.land_on(position).into(),
-            (RedHatBoyStateMachine::Running(state), Event::Land(position)) => state.land_on(position).into(),
-            (RedHatBoyStateMachine::Sliding(state), Event::Land(position)) => state.land_on(position).into(),
+            (RedHatBoyStateMachine::Jumping(state), Event::Land(position)) => {
+                state.land_on(position).into()
+            }
+            (RedHatBoyStateMachine::Running(state), Event::Land(position)) => {
+                state.land_on(position).into()
+            }
+            (RedHatBoyStateMachine::Sliding(state), Event::Land(position)) => {
+                state.land_on(position).into()
+            }
             _ => self,
         }
     }
@@ -608,5 +620,29 @@ impl Platform {
             height: platform.frame.h.into(),
         }
     }
+    fn bounding_boxes(&self) -> Vec<Rect> {
+        const X_OFFSET: f32 = 60.0;
+        const END_HEIGHT: f32 = 54.0;
+        let destination_box = self.destination_box();
+        let bounding_box_one = Rect {
+            x: destination_box.x,
+            y: destination_box.y,
+            width: X_OFFSET,
+            height: END_HEIGHT,
+        };
+        let bounding_box_two = Rect {
+            x: destination_box.x + X_OFFSET,
+            y: destination_box.y,
+            width: destination_box.width - (X_OFFSET * 2.0),
+            height: destination_box.height,
+        };
+        let bounding_box_three = Rect {
+            x: destination_box.x + destination_box.width - X_OFFSET,
+            y: destination_box.y,
+            width: X_OFFSET,
+            height: END_HEIGHT,
+        };
 
+        vec![bounding_box_one, bounding_box_two, bounding_box_three]
+    }
 }
