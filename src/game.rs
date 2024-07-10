@@ -227,7 +227,8 @@ mod red_hat_boy_states {
 
 pub enum Event {
     Run,
-    Slide
+    Slide,
+    Update
 }
 #[derive(Copy, Clone)]
 enum RedHatBoyStateMachine {
@@ -240,6 +241,8 @@ impl RedHatBoyStateMachine {
         match (self, event) {
             (RedHatBoyStateMachine::Idle(state), Event::Run) => state.run().into(),
             (RedHatBoyStateMachine::Running(state), Event::Slide) => state.slide().into(),
+            (RedHatBoyStateMachine::Idle(state),Event::Update)=>state.update().into(),
+            (RedHatBoyStateMachine::Running(state),Event::Update)=>state.update().into(),
             _ => self,
         }
     }
@@ -268,8 +271,12 @@ impl RedHatBoyStateMachine {
                 RedHatBoyStateMachine::Running(state)
             }
             RedHatBoyStateMachine::Sliding(mut state) => {
-                state.update();
-                RedHatBoyStateMachine::Sliding(state)
+                state.update(SLIDING_FRAMES);
+                if state.context().frame == SLIDING_FRAMES {
+                    RedHatBoyStateMachine::Running(state.stand())
+                } else {
+                    RedHatBoyStateMachine::Sliding(state)
+                }
             }
         }
     }
