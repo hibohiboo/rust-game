@@ -13,9 +13,7 @@ pub struct WalkTheDog {
 }
 impl WalkTheDog {
     pub fn new() -> Self {
-        WalkTheDog {
-            rhb: None,
-        }
+        WalkTheDog { rhb: None }
     }
 }
 
@@ -50,7 +48,6 @@ impl Game for WalkTheDog {
         self.rhb.as_mut().unwrap().update();
     }
     fn draw(&self, renderer: &Renderer) {
-
         renderer.clear(&Rect {
             x: 0.0,
             y: 0.0,
@@ -114,7 +111,6 @@ impl RedHatBody {
         self.state_machine = self.state_machine.transition(Event::Slide);
     }
 }
-
 
 mod red_hat_boy_states {
     use crate::engine::Point;
@@ -220,17 +216,32 @@ mod red_hat_boy_states {
         pub fn frame_name(&self) -> &str {
             SLIDE_FRAME_NAME
         }
-        pub fn update(&mut self) {
+        pub fn update(mut self) -> SlidingEndState {
             self.context = self.context.update(SLIDING_FRAMES);
+
+            if self.context.frame >= SLIDING_FRAMES {
+                SlidingEndState::Complete(self.stand())
+            } else {
+                SlidingEndState::Sliding(self)
+            }
+        }
+        pub fn stand(self) -> RedHatBoyState<Running> {
+            RedHatBoyState {
+                context: self.context.reset_frame(),
+                _state: Running {},
+            }
         }
     }
+    pub enum SlidingEndState {
+        Complete(RedHatBoyState<Running>),
+        Sliding(RedHatBoyState<Sliding>),
+    }
 }
-
 
 pub enum Event {
     Run,
     Slide,
-    Update
+    Update,
 }
 #[derive(Copy, Clone)]
 enum RedHatBoyStateMachine {
@@ -243,8 +254,9 @@ impl RedHatBoyStateMachine {
         match (self, event) {
             (RedHatBoyStateMachine::Idle(state), Event::Run) => state.run().into(),
             (RedHatBoyStateMachine::Running(state), Event::Slide) => state.slide().into(),
-            (RedHatBoyStateMachine::Idle(state),Event::Update)=>state.update().into(),
-            (RedHatBoyStateMachine::Running(state),Event::Update)=>state.update().into(),
+            (RedHatBoyStateMachine::Idle(state), Event::Update) => state.update().into(),
+            (RedHatBoyStateMachine::Running(state), Event::Update) => state.update().into(),
+            (RedHatBoyStateMachine::Sliding(state), Event::Update) => state.update().into(),
             _ => self,
         }
     }
@@ -280,5 +292,14 @@ impl From<RedHatBoyState<Idle>> for RedHatBoyStateMachine {
 impl From<RedHatBoyState<Sliding>> for RedHatBoyStateMachine {
     fn from(state: RedHatBoyState<Sliding>) -> Self {
         RedHatBoyStateMachine::Sliding(state)
+    }
+}
+
+impl From<SlidingEndState> for RedHatBoyStateMachine {
+    fn from(end_state: SlidingEndState) -> Self {
+        match end_state {
+            SlidingEndState::Complete(running_state) => running_state.into(),
+            SlidingEndState::Sliding(sliding_state) => sliding_state.into(),
+        }
     }
 }
