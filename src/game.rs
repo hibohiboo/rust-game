@@ -161,6 +161,10 @@ mod red_hat_boy_states {
             }
             self.position.x += self.velocity.x;
             self.position.y += self.velocity.y;
+
+            if self.position.y > FLOOR {
+                self.position.y = FLOOR; 
+            }
             self
         }
         fn reset_frame(mut self) -> Self {
