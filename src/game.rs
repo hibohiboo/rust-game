@@ -1,7 +1,7 @@
 use self::red_hat_boy_states::*;
 use crate::{
     browser,
-    engine::{self, Game, Image, KeyState, Point, Rect, Renderer, Sheet},
+    engine::{self, Cell, Game, Image, KeyState, Point, Rect, Renderer, Sheet},
 };
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -21,7 +21,7 @@ impl WalkTheDog {
 pub struct Walk {
     boy: RedHatBoy,
     background: Image,
-    stone: Image
+    stone: Image,
 }
 
 #[async_trait(?Send)]
@@ -88,19 +88,31 @@ impl RedHatBoy {
             image,
         }
     }
-
-    fn draw(&self, renderer: &Renderer) {
-        let current_sprite = (self.state_machine.context().frame / 3) + 1;
-        let frame_name = format!(
+    fn frame_name(&self) -> String {
+        format!(
             "{} ({}).png",
             self.state_machine.frame_name(),
-            current_sprite
-        );
-        let sprite = self
-            .sprite_sheet
-            .frames
-            .get(&frame_name)
-            .expect("Cell not found in sheet");
+            (self.state_machine.context().frame / 3) + 1
+        )
+    }
+    fn current_sprite(&self) -> Option<&Cell> {
+        self.sprite_sheet.frames.get(&self.frame_name())
+    }
+    fn bounding_box(&self) -> Rect {
+        let sprite = self.current_sprite().expect("Cell not found");
+        Rect {
+            x: (self.state_machine.context().position.x + sprite.sprite_source_size.x as i16)
+                .into(),
+            y: (self.state_machine.context().position.y + sprite.sprite_source_size.y as i16)
+                .into(),
+            width: sprite.frame.w.into(),
+            height: sprite.frame.h.into(),
+        }
+    }
+
+    fn draw(&self, renderer: &Renderer) {
+        let sprite = self.current_sprite().expect("Cell not found");
+
         renderer.draw_image(
             &self.image,
             &Rect {
@@ -109,12 +121,7 @@ impl RedHatBoy {
                 width: sprite.frame.w.into(),
                 height: sprite.frame.h.into(),
             },
-            &Rect {
-                x: (self.state_machine.context().position.x + sprite.sprite_source_size.x as i16).into(),
-                y: (self.state_machine.context().position.y + sprite.sprite_source_size.y as i16).into(),
-                width: sprite.frame.w.into(),
-                height: sprite.frame.h.into(),
-            },
+            &self.bounding_box()
         );
     }
     fn update(&mut self) {
@@ -205,14 +212,17 @@ mod red_hat_boy_states {
     pub struct Jumping;
 
     const FLOOR: i16 = 479;
-    const STARTING_POINT : i16 = -20;
+    const STARTING_POINT: i16 = -20;
 
     impl RedHatBoyState<Idle> {
         pub fn new() -> Self {
             RedHatBoyState {
                 context: RedHatBoyContext {
                     frame: 0,
-                    position: Point { x: STARTING_POINT, y: FLOOR },
+                    position: Point {
+                        x: STARTING_POINT,
+                        y: FLOOR,
+                    },
                     velocity: Point { x: 0, y: 0 },
                 },
                 _state: Idle {},
