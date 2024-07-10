@@ -64,6 +64,9 @@ impl Game for WalkTheDog {
                 walk.boy.jump();
             }
             walk.boy.update();
+            if walk.boy.bounding_box().intersects(&walk.platform.bounding_box()) {
+                walk.boy.land();
+            }
             if walk.boy.bounding_box().intersects(&walk.stone.bounding_box()) { 
                 walk.boy.knock_out();
             }
@@ -149,6 +152,9 @@ impl RedHatBoy {
     fn knock_out(&mut self) {
         self.state_machine = self.state_machine.transition(Event::KnockOut);
     }
+    fn land(&mut self) {
+        self.state_machine = self.state_machine.transition(Event::Land);
+    } 
 }
 
 mod red_hat_boy_states {
@@ -396,6 +402,7 @@ pub enum Event {
     Jump,
     KnockOut,
     Update,
+    Land
 }
 #[derive(Copy, Clone)]
 enum RedHatBoyStateMachine {
@@ -419,6 +426,8 @@ impl RedHatBoyStateMachine {
             (RedHatBoyStateMachine::Sliding(state), Event::KnockOut) => state.knock_out().into(),
             (RedHatBoyStateMachine::Jumping(state), Event::KnockOut) => state.knock_out().into(),
             (RedHatBoyStateMachine::Running(state), Event::KnockOut) => state.knock_out().into(),
+            (RedHatBoyStateMachine::Falling(state), Event::Update) => state.update().into(),
+            (RedHatBoyStateMachine::Jumping(state), Event::Land) => state.land().into(),
             _ => self,
         }
     }
