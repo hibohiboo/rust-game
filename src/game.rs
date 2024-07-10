@@ -9,8 +9,8 @@ use gloo_utils::format::JsValueSerdeExt;
 use web_sys::HtmlImageElement;
 
 const HEIGHT: i16 = 600;
-const LOW_PLATFORM: i16 = 220;
-const FIRST_PLATFORM: i16 = 70;
+const LOW_PLATFORM: i16 = 420;
+const FIRST_PLATFORM: i16 = 370;
 const HIGH_PLATFORM: i16 = 375;
 pub enum WalkTheDog {
     Loading,
