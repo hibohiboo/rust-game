@@ -128,7 +128,8 @@ mod red_hat_boy_states {
     const SLIDE_FRAME_NAME: &str = "Slide";
     const SLIDING_FRAMES: u8 = 14;
     const JUMP_FRAME_NAME: &str = "Jump";
-    const JUMPING_FRAMES: u8 = 35; // 12 * 3 - 1
+    const JUMPING_FRAMES: u8 = 35; // 12(画像の枚数) * 3 - 1
+    const JUMP_SPEED: i16 = -25;
 
     #[derive(Copy, Clone)]
     pub struct RedHatBoyState<S> {
@@ -166,6 +167,10 @@ mod red_hat_boy_states {
         }
         fn run_right(mut self) -> Self {
             self.velocity.x = RUNNING_SPEED;
+            self
+        }
+        fn set_vertical_velocity(mut self, speed: i16) -> Self {
+            self.velocity.y = speed;
             self
         }
     }
@@ -225,7 +230,7 @@ mod red_hat_boy_states {
 
         pub fn jump(self) -> RedHatBoyState<Jumping> {
             RedHatBoyState {
-                context: self.context.reset_frame(),
+                context: self.context.set_vertical_velocity(JUMP_SPEED).reset_frame(),
                 _state: Jumping {},
             }
         }
