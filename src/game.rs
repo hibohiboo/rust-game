@@ -66,6 +66,11 @@ impl Game for WalkTheDog {
             }
             walk.boy.update();
             if walk.boy.bounding_box().intersects(&walk.platform.bounding_box()) {
+                if walk.boy.velocity_y() > 0 && walk.boy.pos_y() < walk.platform.position.y {
+                    walk.boy.land_on(walk.platform.bounding_box().y);
+                }else {
+                    walk.boy.knock_out();
+                }
                 walk.boy.land_on(walk.platform.bounding_box().y);
             }
             if walk.boy.bounding_box().intersects(&walk.stone.bounding_box()) { 
@@ -156,6 +161,12 @@ impl RedHatBoy {
     fn land_on(&mut self, position: f32) {
         self.state_machine = self.state_machine.transition(Event::Land(position));
     } 
+    fn pos_y(&self) -> i16 {
+        self.state_machine.context().position.y
+    }
+    fn velocity_y(&self) -> i16 {
+        self.state_machine.context().velocity.y
+    }
 }
 
 mod red_hat_boy_states {
