@@ -202,7 +202,7 @@ mod red_hat_boy_states {
     const IDLE_FRAME_NAME: &str = "Idle";
     const RUN_FRAME_NAME: &str = "Run";
     const RUNNING_FRAMES: u8 = 23;
-    const RUNNING_SPEED: i16 = 3;
+    const RUNNING_SPEED: i16 = 4;
     const SLIDE_FRAME_NAME: &str = "Slide";
     const SLIDING_FRAMES: u8 = 14;
     const JUMP_FRAME_NAME: &str = "Jump";
