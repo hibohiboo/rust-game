@@ -9,6 +9,9 @@ use gloo_utils::format::JsValueSerdeExt;
 use web_sys::HtmlImageElement;
 
 const HEIGHT: i16 = 600;
+const LOW_PLATFORM: i16 = 420;
+const FIRST_PLATFORM: i16 = 370;
+const HIGH_PLATFORM: i16 = 375;
 pub enum WalkTheDog {
     Loading,
     Loaded(Walk),
@@ -38,7 +41,7 @@ impl Game for WalkTheDog {
                 let platform = Platform::new(
                     platform_sheet.into_serde::<Sheet>()?,
                     engine::load_image("tiles.png").await?,
-                    Point { x: 200, y: 200 },
+                    Point { x: FIRST_PLATFORM, y: LOW_PLATFORM },
                 );
                 let rhb = RedHatBoy::new(
                     json.into_serde::<Sheet>()?,
