@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use gloo_utils::format::JsValueSerdeExt;
 use web_sys::HtmlImageElement;
 
+const HEIGHT:i16 = 600;
 pub enum WalkTheDog {
     Loading,
     Loaded(Walk),
@@ -44,7 +45,7 @@ impl Game for WalkTheDog {
                 Ok(Box::new(WalkTheDog::Loaded(Walk {
                     boy: rhb,
                     background: Image::new(background, Point { x: 0, y: 0 }),
-                    stone: Image::new(stone, Point { x: 150, y: 546 }),
+                    stone: Image::new(stone, Point { x: 250, y: 546 }),
                     platform
                 })))
             }
@@ -65,7 +66,7 @@ impl Game for WalkTheDog {
             }
             walk.boy.update();
             if walk.boy.bounding_box().intersects(&walk.platform.bounding_box()) {
-                walk.boy.land();
+                walk.boy.land_on(walk.platform.bounding_box().y);
             }
             if walk.boy.bounding_box().intersects(&walk.stone.bounding_box()) { 
                 walk.boy.knock_out();
@@ -76,7 +77,7 @@ impl Game for WalkTheDog {
         renderer.clear(&Rect {
             x: 0.0,
             y: 0.0,
-            width: 600.0,
+            width: HEIGHT as f32,
             height: 600.0,
         });
         if let WalkTheDog::Loaded(walk) = self {
@@ -152,13 +153,17 @@ impl RedHatBoy {
     fn knock_out(&mut self) {
         self.state_machine = self.state_machine.transition(Event::KnockOut);
     }
-    fn land(&mut self) {
-        self.state_machine = self.state_machine.transition(Event::Land);
+    fn land_on(&mut self, position: f32) {
+        self.state_machine = self.state_machine.transition(Event::Land(position));
     } 
 }
 
 mod red_hat_boy_states {
     use crate::engine::Point;
+    use super::HEIGHT;
+    const FLOOR: i16 = 479;
+    const PLAYER_HEIGHT: i16 = HEIGHT - FLOOR ;
+    const STARTING_POINT: i16 = -20;
     const IDLE_FRAMES: u8 = 29;
     const IDLE_FRAME_NAME: &str = "Idle";
     const RUN_FRAME_NAME: &str = "Run";
@@ -227,6 +232,11 @@ mod red_hat_boy_states {
             self.velocity.x = 0;
             self
         }
+        fn set_on(mut self, position: i16) -> Self {
+            let position = position - PLAYER_HEIGHT;
+            self.position.y = position;
+            self
+        }
     }
 
     #[derive(Copy, Clone)]
@@ -244,8 +254,7 @@ mod red_hat_boy_states {
     #[derive(Copy, Clone)]
     pub struct KnockedOut;
 
-    const FLOOR: i16 = 479;
-    const STARTING_POINT: i16 = -20;
+
 
     impl RedHatBoyState<Idle> {
         pub fn new() -> Self {
@@ -303,6 +312,12 @@ mod red_hat_boy_states {
                 _state: Falling {},
             }
         }
+        pub fn land_on(self, position: f32) -> RedHatBoyState<Running> {
+            RedHatBoyState {
+                context: self.context.reset_frame().set_on(position as i16),
+                _state: Running {},
+            }
+        }
     }
     impl RedHatBoyState<Sliding> {
         pub fn frame_name(&self) -> &str {
@@ -338,14 +353,15 @@ mod red_hat_boy_states {
             self.context = self.context.update(JUMPING_FRAMES);
 
             if self.context.position.y >= FLOOR {
-                JumpingEndState::Complete(self.land())
+                JumpingEndState::Landing(self.land_on(HEIGHT.into()))
             } else {
                 JumpingEndState::Jumping(self)
             }
         }
-        pub fn land(self) -> RedHatBoyState<Running> {
+        pub fn land_on(self, position: f32) -> RedHatBoyState<Running> {
+   
             RedHatBoyState {
-                context: self.context.reset_frame(),
+                context: self.context.reset_frame().set_on(position as i16),
                 _state: Running {},
             }
         }
@@ -387,7 +403,7 @@ mod red_hat_boy_states {
         Sliding(RedHatBoyState<Sliding>),
     }
     pub enum JumpingEndState {
-        Complete(RedHatBoyState<Running>),
+        Landing(RedHatBoyState<Running>),
         Jumping(RedHatBoyState<Jumping>),
     }
     pub enum FallingEndState {
@@ -402,7 +418,7 @@ pub enum Event {
     Jump,
     KnockOut,
     Update,
-    Land
+    Land(f32)
 }
 #[derive(Copy, Clone)]
 enum RedHatBoyStateMachine {
@@ -427,7 +443,7 @@ impl RedHatBoyStateMachine {
             (RedHatBoyStateMachine::Jumping(state), Event::KnockOut) => state.knock_out().into(),
             (RedHatBoyStateMachine::Running(state), Event::KnockOut) => state.knock_out().into(),
             (RedHatBoyStateMachine::Falling(state), Event::Update) => state.update().into(),
-            (RedHatBoyStateMachine::Jumping(state), Event::Land) => state.land().into(),
+            (RedHatBoyStateMachine::Jumping(state), Event::Land(position)) => state.land_on(position).into(),
             _ => self,
         }
     }
@@ -504,7 +520,7 @@ impl From<SlidingEndState> for RedHatBoyStateMachine {
 impl From<JumpingEndState> for RedHatBoyStateMachine {
     fn from(end_state: JumpingEndState) -> Self {
         match end_state {
-            JumpingEndState::Complete(running_state) => running_state.into(),
+            JumpingEndState::Landing(running_state) => running_state.into(),
             JumpingEndState::Jumping(jumping_state) => jumping_state.into(),
         }
     }
