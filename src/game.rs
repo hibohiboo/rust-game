@@ -1,7 +1,7 @@
 use self::red_hat_boy_states::*;
 use crate::{
     browser,
-    engine::{self, Game, KeyState, Rect, Renderer, Sheet},
+    engine::{self, Game, Image, KeyState, Point, Rect, Renderer, Sheet},
 };
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -10,13 +10,17 @@ use web_sys::HtmlImageElement;
 
 pub enum WalkTheDog {
     Loading,
-    Loaded(RedHatBoy),
+    Loaded(Walk),
 }
 
 impl WalkTheDog {
     pub fn new() -> Self {
         WalkTheDog::Loading
     }
+}
+pub struct Walk {
+    boy: RedHatBoy,
+    background: Image,
 }
 
 #[async_trait(?Send)]
@@ -25,28 +29,32 @@ impl Game for WalkTheDog {
         match self {
             WalkTheDog::Loading => {
                 let json = browser::fetch_json("rhb.json").await?;
+                let background = engine::load_image("BG.png").await?;
                 let rhb = RedHatBoy::new(
                     json.into_serde::<Sheet>()?,
                     engine::load_image("rhb.png").await?,
                 );
-                Ok(Box::new(WalkTheDog::Loaded(rhb)))
+                Ok(Box::new(WalkTheDog::Loaded(Walk {
+                    boy: rhb,
+                    background: Image::new(background, Point { x: 0, y: 0 }),
+                })))
             }
             WalkTheDog::Loaded(_) => Err(anyhow!("Game already initialized")),
         }
     }
     fn update(&mut self, keystate: &KeyState) {
-        if let WalkTheDog::Loaded(rhb) = self {
+        if let WalkTheDog::Loaded(walk) = self {
             // 同時押しに対応するため、elseを使わずifで分岐している
             if keystate.is_pressed("ArrowRight") {
-                rhb.run_right();
+                walk.boy.run_right();
             }
             if keystate.is_pressed("ArrowDown") {
-                rhb.slide();
+                walk.boy.slide();
             }
-            if keystate.is_pressed("Space"){
-                rhb.jump();
+            if keystate.is_pressed("Space") {
+                walk.boy.jump();
             }
-            rhb.update();
+            walk.boy.update();
         }
     }
     fn draw(&self, renderer: &Renderer) {
@@ -56,8 +64,9 @@ impl Game for WalkTheDog {
             width: 600.0,
             height: 600.0,
         });
-        if let WalkTheDog::Loaded(rhb) = self {
-            rhb.draw(renderer);
+        if let WalkTheDog::Loaded(walk) = self {
+            walk.background.draw(renderer);
+            walk.boy.draw(renderer);
         }
     }
 }
@@ -163,7 +172,7 @@ mod red_hat_boy_states {
             self.position.y += self.velocity.y;
 
             if self.position.y > FLOOR {
-                self.position.y = FLOOR; 
+                self.position.y = FLOOR;
             }
             self
         }
@@ -260,9 +269,8 @@ mod red_hat_boy_states {
                 _state: Running {},
             }
         }
-
     }
-    impl RedHatBoyState<Jumping>{
+    impl RedHatBoyState<Jumping> {
         pub fn frame_name(&self) -> &str {
             JUMP_FRAME_NAME
         }
@@ -296,7 +304,7 @@ pub enum Event {
     Run,
     Slide,
     Update,
-    Jump
+    Jump,
 }
 #[derive(Copy, Clone)]
 enum RedHatBoyStateMachine {

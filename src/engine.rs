@@ -44,6 +44,8 @@ pub struct Cell {
 pub struct Sheet {
     pub frames: HashMap<String, Cell>,
 }
+
+ 
 // #[derive(Default)]
 // pub struct Rect {
 //     pub position: Point,
@@ -272,6 +274,16 @@ impl Renderer {
             destination.height.into(),
         ).expect("Drawing is thrown exceptions! Unrecoverable error.");
     }
+    pub fn draw_entire_image(&self, image: &HtmlImageElement, position: Point) {
+        self.context.draw_image_with_html_image_element_and_dw_and_dh(
+            image,
+            position.x.into(),
+            position.y.into(),
+            image.width().into(),
+            image.height().into(),
+        ).expect("Drawing is thrown exceptions! Unrecoverable error.");
+
+    }
 }
 enum KeyPress {
     KeyUp(web_sys::KeyboardEvent),
@@ -334,4 +346,21 @@ fn prepare_input () -> Result<UnboundedReceiver<KeyPress>>{
     onkeydown.forget();
     onkeyup.forget();
     Ok(keyevent_receiver)
+}
+
+pub struct Image {
+    element: HtmlImageElement,
+    position: Point
+}
+
+impl Image {
+    pub fn new(element: HtmlImageElement, position: Point) -> Self {
+        Self {
+            element,
+            position
+        }
+    }
+    pub fn draw(&self, renderer: &Renderer) {
+        renderer.draw_entire_image(&self.element, self.position);
+    }
 }
