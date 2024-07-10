@@ -177,6 +177,7 @@ mod red_hat_boy_states {
     const GRAVITY: i16 = 1;
     const FALLING_FRAMES: u8 = 29;
     const FALLING_FRAME_NAME: &str = "Dead";
+    const TERMINAL_VELOCITY: i16 = 20;
 
     #[derive(Copy, Clone)]
     pub struct RedHatBoyState<S> {
@@ -202,7 +203,9 @@ mod red_hat_boy_states {
 
     impl RedHatBoyContext {
         pub fn update(mut self, frame_count: u8) -> Self {
-            self.velocity.y += GRAVITY;
+            if self.velocity.y < TERMINAL_VELOCITY {
+                self.velocity.y += GRAVITY;
+            }
             if self.frame < frame_count {
                 self.frame += 1;
             } else {
