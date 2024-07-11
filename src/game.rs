@@ -27,7 +27,7 @@ pub struct Walk {
     boy: RedHatBoy,
     backgrounds: [Image; 2],
     stone: Image,
-    platform: Platform,
+    platform: Box< dyn Obstacle>,
 }
 
 impl Walk {
@@ -71,7 +71,7 @@ impl Game for WalkTheDog {
                         ),
                     ],
                     stone: Image::new(stone, Point { x: 250, y: 546 }),
-                    platform,
+                    platform: Box::new(platform),
                 })))
             }
             WalkTheDog::Loaded(_) => Err(anyhow!("Game already initialized")),
@@ -93,10 +93,11 @@ impl Game for WalkTheDog {
             walk.boy.update();
 
             // boy以外のすべてのオブジェクトを動かす
-            walk.platform.position.x += walk.velocity();
-            walk.stone.move_horizonatally(walk.velocity());
-
             let velocity = walk.velocity();
+            walk.platform.move_horizonatally(velocity);
+            walk.stone.move_horizonatally(velocity);
+
+
             let [first_background, second_background] = &mut walk.backgrounds;
             first_background.move_horizonatally(velocity);
             second_background.move_horizonatally(velocity);
@@ -108,19 +109,9 @@ impl Game for WalkTheDog {
                 second_background.set_x(first_background.right());
             }
 
-            for bounding_box in &walk.platform.bounding_boxes() {
-                if walk.boy.bounding_box().intersects(bounding_box) {
-                    if walk.boy.velocity_y() > 0 && walk.boy.pos_y() < walk.platform.position.y {
-                        walk.boy.land_on(bounding_box.position.y);
-                    } else {
-                        walk.boy.knock_out();
-                    }
-                }
-            }
-            if walk
-                .boy
-                .bounding_box()
-                .intersects(&walk.stone.bounding_box())
+            walk.platform.check_intersection(&mut walk.boy);
+
+            if walk.boy.bounding_box().intersects(&walk.stone.bounding_box())
             {
                 walk.boy.knock_out();
             }
@@ -683,5 +674,48 @@ impl Platform {
         );
 
         vec![bounding_box_one, bounding_box_two, bounding_box_three]
+    }
+}
+
+pub trait Obstacle {
+    fn check_intersection(&self, boy: &mut RedHatBoy);
+    fn draw(&self, renderer: &Renderer);
+    fn move_horizonatally(&mut self, velocity: i16);
+}
+
+impl Obstacle for Platform {
+    fn draw(&self, renderer: &Renderer) {
+        let platform = self.sheet.frames.get("13.png").expect("Cell not found");
+        renderer.draw_image(
+            &self.image,
+            &Rect::new_from_x_y(
+                platform.frame.x.into(),
+                platform.frame.y.into(),
+                (platform.frame.w * 3).into(),
+                platform.frame.h.into(),
+            ),
+            &Rect::new_from_x_y(
+                self.position.x.into(),
+                self.position.y.into(),
+                (platform.frame.w * 3).into(),
+                platform.frame.h.into(),
+            ),
+        );
+    }
+    fn move_horizonatally(&mut self, x: i16) {
+        self.position.x += x;
+    }
+    fn check_intersection(&self, boy: &mut RedHatBoy) {
+        for bounding_box in self.bounding_boxes() {
+        if let Some(box_to_land_on) = self.bounding_boxes().iter()
+        .find(|&bounding_box|boy.bounding_box().intersects(bounding_box)){
+            if boy.velocity_y() > 0 && boy.pos_y() < self.position.y {
+                boy.land_on(box_to_land_on.y());
+            } else {
+                boy.knock_out();
+            }
+        }
+
+        }
     }
 }
