@@ -27,7 +27,7 @@ pub struct Walk {
     boy: RedHatBoy,
     backgrounds: [Image; 2],
     stone: Image,
-    platform: Box< dyn Obstacle>,
+    platform: Box<dyn Obstacle>,
 }
 
 impl Walk {
@@ -97,7 +97,6 @@ impl Game for WalkTheDog {
             walk.platform.move_horizonatally(velocity);
             walk.stone.move_horizonatally(velocity);
 
-
             let [first_background, second_background] = &mut walk.backgrounds;
             first_background.move_horizonatally(velocity);
             second_background.move_horizonatally(velocity);
@@ -111,7 +110,10 @@ impl Game for WalkTheDog {
 
             walk.platform.check_intersection(&mut walk.boy);
 
-            if walk.boy.bounding_box().intersects(&walk.stone.bounding_box())
+            if walk
+                .boy
+                .bounding_box()
+                .intersects(&walk.stone.bounding_box())
             {
                 walk.boy.knock_out();
             }
@@ -689,16 +691,16 @@ impl Obstacle for Platform {
         self.position.x += x;
     }
     fn check_intersection(&self, boy: &mut RedHatBoy) {
-        for bounding_box in self.bounding_boxes() {
-        if let Some(box_to_land_on) = self.bounding_boxes().iter()
-        .find(|&bounding_box|boy.bounding_box().intersects(bounding_box)){
+        if let Some(box_to_land_on) = self
+            .bounding_boxes()
+            .iter()
+            .find(|&bounding_box| boy.bounding_box().intersects(bounding_box))
+        {
             if boy.velocity_y() > 0 && boy.pos_y() < self.position.y {
                 boy.land_on(box_to_land_on.y());
             } else {
                 boy.knock_out();
             }
-        }
-
         }
     }
 }
