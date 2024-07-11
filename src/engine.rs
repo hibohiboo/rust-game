@@ -1,20 +1,19 @@
 use crate::browser::LoopClosure;
 use crate::browser::{self};
-use futures::channel::mpsc::{unbounded, UnboundedReceiver};
-use serde::Deserialize;
-use web_sys::CanvasRenderingContext2d;
-use web_sys::HtmlImageElement;
 use anyhow::{anyhow, Result};
+use async_trait::async_trait;
+use futures::channel::mpsc::{unbounded, UnboundedReceiver};
+use futures::channel::oneshot::channel;
+use serde::Deserialize;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Mutex;
-use futures::channel::oneshot::channel;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use async_trait::async_trait;
+use web_sys::CanvasRenderingContext2d;
+use web_sys::HtmlImageElement;
 // use wasm_bindgen_test::__rt::browser;
-
 
 #[derive(Clone, Copy, Default)]
 pub struct Point {
@@ -42,7 +41,6 @@ pub struct Sheet {
     pub frames: HashMap<String, Cell>,
 }
 
- 
 #[derive(Default)]
 pub struct Rect {
     pub position: Point,
@@ -92,7 +90,8 @@ impl Rect {
 }
 
 #[cfg(test)] // Only compile the following module when running tests
-mod tests { // 他のコードから隔離するため mod キーワードでモジュール化する
+mod tests {
+    // 他のコードから隔離するため mod キーワードでモジュール化する
     use super::*;
 
     #[test]
@@ -165,7 +164,6 @@ mod tests { // 他のコードから隔離するため mod キーワードでモ
     }
 }
 
-
 pub async fn load_image(source: &str) -> Result<HtmlImageElement> {
     let image = browser::new_image()?;
 
@@ -197,11 +195,10 @@ pub async fn load_image(source: &str) -> Result<HtmlImageElement> {
     Ok(image)
 }
 
-
 #[async_trait(?Send)]
 pub trait Game {
     async fn initialize(&self) -> Result<Box<dyn Game>>;
-    fn update(&mut self,keystate: &KeyState);
+    fn update(&mut self, keystate: &KeyState);
     fn draw(&self, renderer: &Renderer);
 }
 
@@ -222,9 +219,9 @@ impl GameLoop {
         };
 
         let renderer = Renderer {
-            context: browser::context()?
+            context: browser::context()?,
         };
-        
+
         let f: SharedLoopClosure = Rc::new(RefCell::new(None));
         let g = f.clone();
 
@@ -244,7 +241,9 @@ impl GameLoop {
             let _ = browser::request_animation_frame(f.borrow().as_ref().unwrap());
         }));
         let _ = browser::request_animation_frame(
-            g.borrow().as_ref().ok_or_else(|| anyhow!("GameLoop: Loop is None"))?
+            g.borrow()
+                .as_ref()
+                .ok_or_else(|| anyhow!("GameLoop: Loop is None"))?,
         );
         Ok(())
     }
@@ -256,30 +255,38 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn clear(&self, rect: &Rect) {
-        self.context.clear_rect(rect.position.x.into(), rect.position.y.into(), rect.width.into(), rect.height.into());
+        self.context.clear_rect(
+            rect.position.x.into(),
+            rect.position.y.into(),
+            rect.width.into(),
+            rect.height.into(),
+        );
     }
     pub fn draw_image(&self, image: &HtmlImageElement, frame: &Rect, destination: &Rect) {
-        self.context.draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
-            image,
-            frame.position.x.into(),
-            frame.position.y.into(),
-            frame.width.into(),
-            frame.height.into(),
-            destination.position.x.into(),
-            destination.position.y.into(),
-            destination.width.into(),
-            destination.height.into(),
-        ).expect("Drawing is thrown exceptions! Unrecoverable error.");
+        self.context
+            .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
+                image,
+                frame.position.x.into(),
+                frame.position.y.into(),
+                frame.width.into(),
+                frame.height.into(),
+                destination.position.x.into(),
+                destination.position.y.into(),
+                destination.width.into(),
+                destination.height.into(),
+            )
+            .expect("Drawing is thrown exceptions! Unrecoverable error.");
     }
     pub fn draw_entire_image(&self, image: &HtmlImageElement, position: Point) {
-        self.context.draw_image_with_html_image_element_and_dw_and_dh(
-            image,
-            position.x.into(),
-            position.y.into(),
-            image.width().into(),
-            image.height().into(),
-        ).expect("Drawing is thrown exceptions! Unrecoverable error.");
-
+        self.context
+            .draw_image_with_html_image_element_and_dw_and_dh(
+                image,
+                position.x.into(),
+                position.y.into(),
+                image.width().into(),
+                image.height().into(),
+            )
+            .expect("Drawing is thrown exceptions! Unrecoverable error.");
     }
 }
 enum KeyPress {
@@ -287,7 +294,7 @@ enum KeyPress {
     KeyDown(web_sys::KeyboardEvent),
 }
 
-pub struct KeyState{
+pub struct KeyState {
     pressed_keys: HashMap<String, web_sys::KeyboardEvent>,
 }
 impl KeyState {
@@ -306,40 +313,47 @@ impl KeyState {
         self.pressed_keys.remove(code);
     }
 }
-fn process_input(state: &mut KeyState,keyevent_receiver: &mut UnboundedReceiver<KeyPress>) {
+fn process_input(state: &mut KeyState, keyevent_receiver: &mut UnboundedReceiver<KeyPress>) {
     loop {
         match keyevent_receiver.try_next() {
             Ok(None) => break,
             Err(_) => break,
             Ok(Some(evt)) => match evt {
-                KeyPress::KeyUp(evt)=>state.set_released(&evt.code()),
-                KeyPress::KeyDown(evt)=>state.set_pressed(&evt.code(),evt),
+                KeyPress::KeyUp(evt) => state.set_released(&evt.code()),
+                KeyPress::KeyDown(evt) => state.set_pressed(&evt.code(), evt),
             },
         }
     }
-
 }
 
 /**
  * Prepare input events
  * ※canvas要素にはtabIndex属性がついておりキーボードイベントを取得できる前提とする。
  */
-fn prepare_input () -> Result<UnboundedReceiver<KeyPress>>{
+fn prepare_input() -> Result<UnboundedReceiver<KeyPress>> {
     let (keydown_sender, keyevent_receiver) = unbounded();
     let keydown_sender = Rc::new(RefCell::new(keydown_sender));
     let keyup_sender = Rc::clone(&keydown_sender);
 
-    let onkeydown = browser::closure_wrap( Box::new(move | keycode: web_sys::KeyboardEvent|{
+    let onkeydown = browser::closure_wrap(Box::new(move |keycode: web_sys::KeyboardEvent| {
         log!("{}", &format!("Key Down: {}", keycode.key()));
-        let _ = keydown_sender.borrow_mut().start_send(KeyPress::KeyDown(keycode));
+        let _ = keydown_sender
+            .borrow_mut()
+            .start_send(KeyPress::KeyDown(keycode));
     }) as Box<dyn FnMut(web_sys::KeyboardEvent)>);
 
-    let onkeyup = browser::closure_wrap( Box::new(move | keycode: web_sys::KeyboardEvent|{
-        let _ = keyup_sender.borrow_mut().start_send(KeyPress::KeyUp(keycode));
-    }) as Box<dyn FnMut(web_sys::KeyboardEvent)>);    
+    let onkeyup = browser::closure_wrap(Box::new(move |keycode: web_sys::KeyboardEvent| {
+        let _ = keyup_sender
+            .borrow_mut()
+            .start_send(KeyPress::KeyUp(keycode));
+    }) as Box<dyn FnMut(web_sys::KeyboardEvent)>);
 
-    browser::canvas().unwrap().set_onkeydown(Some(onkeydown.as_ref().unchecked_ref()));
-    browser::canvas().unwrap().set_onkeyup(Some(onkeyup.as_ref().unchecked_ref()));
+    browser::canvas()
+        .unwrap()
+        .set_onkeydown(Some(onkeydown.as_ref().unchecked_ref()));
+    browser::canvas()
+        .unwrap()
+        .set_onkeyup(Some(onkeyup.as_ref().unchecked_ref()));
     onkeydown.forget();
     onkeyup.forget();
     Ok(keyevent_receiver)
@@ -347,15 +361,20 @@ fn prepare_input () -> Result<UnboundedReceiver<KeyPress>>{
 
 pub struct Image {
     element: HtmlImageElement,
-    bounding_box: Rect
+    bounding_box: Rect,
 }
 
 impl Image {
     pub fn new(element: HtmlImageElement, position: Point) -> Self {
-        let bounding_box = Rect::new_from_x_y(position.x, position.y, element.width() as i16, element.height() as i16);;
+        let bounding_box = Rect::new_from_x_y(
+            position.x,
+            position.y,
+            element.width() as i16,
+            element.height() as i16,
+        );
         Self {
             element,
-            bounding_box
+            bounding_box,
         }
     }
     pub fn draw(&self, renderer: &Renderer) {
@@ -369,10 +388,28 @@ impl Image {
     }
 
     pub fn set_x(&mut self, x: i16) {
-        self.bounding_box.set_x(x) ;
+        self.bounding_box.set_x(x);
         self.bounding_box.position.x = x;
     }
     pub fn right(&self) -> i16 {
         (self.bounding_box.x() + self.bounding_box.width) as i16
+    }
+}
+
+pub struct SpriteSheet {
+    image: HtmlImageElement,
+    sheet: Sheet,
+}
+
+impl SpriteSheet {
+    pub async fn new(sheet: Sheet, image: HtmlImageElement) -> Self {
+        Self { image, sheet }
+    }
+    pub fn cell(&self, name: &str) -> Option<&Cell> {
+        self.sheet.frames.get(name)
+    }
+
+    pub fn draw(&self, renderer: &Renderer, source: &Rect, destination: &Rect) {
+        renderer.draw_image(&self.image, source, destination);
     }
 }

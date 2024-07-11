@@ -1,7 +1,7 @@
 use self::red_hat_boy_states::*;
 use crate::{
     browser,
-    engine::{self, Cell, Game, Image, KeyState, Point, Rect, Renderer, Sheet},
+    engine::{self, Cell, Game, Image, KeyState, Point, Rect, Renderer, Sheet, SpriteSheet},
 };
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -45,8 +45,11 @@ impl Game for WalkTheDog {
                 let stone = engine::load_image("Stone.png").await?;
                 let platform_sheet = browser::fetch_json("tiles.json").await?;
                 let platform = Platform::new(
-                    platform_sheet.into_serde::<Sheet>()?,
-                    engine::load_image("tiles.png").await?,
+                    SpriteSheet::new(
+                        platform_sheet.into_serde::<Sheet>()?,
+                        engine::load_image("tiles.png").await?,
+                    )
+                    .await,
                     Point {
                         x: FIRST_PLATFORM,
                         y: LOW_PLATFORM,
@@ -610,22 +613,17 @@ impl From<FallingEndState> for RedHatBoyStateMachine {
 }
 
 struct Platform {
-    sheet: Sheet,
-    image: HtmlImageElement,
+    sheet: SpriteSheet,
     position: Point,
 }
 
 impl Platform {
-    fn new(sheet: Sheet, image: HtmlImageElement, position: Point) -> Self {
-        Platform {
-            sheet,
-            image,
-            position,
-        }
+    fn new(sheet: SpriteSheet, position: Point) -> Self {
+        Platform { sheet, position }
     }
 
     fn destination_box(&self) -> Rect {
-        let platform = self.sheet.frames.get("13.png").expect("Cell not found");
+        let platform = self.sheet.cell("13.png").expect("Cell not found");
         Rect::new_from_x_y(
             self.position.x.into(),
             self.position.y.into(),
@@ -669,9 +667,9 @@ pub trait Obstacle {
 
 impl Obstacle for Platform {
     fn draw(&self, renderer: &Renderer) {
-        let platform = self.sheet.frames.get("13.png").expect("Cell not found");
-        renderer.draw_image(
-            &self.image,
+        let platform = self.sheet.cell("13.png").expect("Cell not found");
+        self.sheet.draw(
+            renderer,
             &Rect::new_from_x_y(
                 platform.frame.x.into(),
                 platform.frame.y.into(),
@@ -703,7 +701,10 @@ impl Obstacle for Platform {
         }
     }
     fn right(&self) -> i16 {
-       self.bounding_boxes().last().unwrap_or(&Rect::default()).right()
+        self.bounding_boxes()
+            .last()
+            .unwrap_or(&Rect::default())
+            .right()
     }
 }
 
