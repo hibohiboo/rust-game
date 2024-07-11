@@ -26,8 +26,7 @@ impl WalkTheDog {
 pub struct Walk {
     boy: RedHatBoy,
     backgrounds: [Image; 2],
-    stone: Image,
-    platform: Box<dyn Obstacle>,
+    obstacles: Vec<Box<dyn Obstacle>>,
 }
 
 impl Walk {
@@ -70,8 +69,10 @@ impl Game for WalkTheDog {
                             },
                         ),
                     ],
-                    stone: Image::new(stone, Point { x: 250, y: 546 }),
-                    platform: Box::new(platform),
+                    obstacles: vec![
+                        Box::new(Barrier::new(Image::new(stone, Point { x: 250, y: 546 }))),
+                        Box::new(platform),
+                    ],
                 })))
             }
             WalkTheDog::Loaded(_) => Err(anyhow!("Game already initialized")),
@@ -94,8 +95,6 @@ impl Game for WalkTheDog {
 
             // boy以外のすべてのオブジェクトを動かす
             let velocity = walk.velocity();
-            walk.platform.move_horizonatally(velocity);
-            walk.stone.move_horizonatally(velocity);
 
             let [first_background, second_background] = &mut walk.backgrounds;
             first_background.move_horizonatally(velocity);
@@ -108,15 +107,10 @@ impl Game for WalkTheDog {
                 second_background.set_x(first_background.right());
             }
 
-            walk.platform.check_intersection(&mut walk.boy);
-
-            if walk
-                .boy
-                .bounding_box()
-                .intersects(&walk.stone.bounding_box())
-            {
-                walk.boy.knock_out();
-            }
+            walk.obstacles.iter_mut().for_each(|obstacle| {
+                obstacle.move_horizonatally(velocity);
+                obstacle.check_intersection(&mut walk.boy);
+            });
         }
     }
     fn draw(&self, renderer: &Renderer) {
@@ -130,8 +124,9 @@ impl Game for WalkTheDog {
                 backgdound.draw(renderer);
             });
             walk.boy.draw(renderer);
-            walk.stone.draw(renderer);
-            walk.platform.draw(renderer);
+            walk.obstacles.iter().for_each(|obstacle| {
+                obstacle.draw(renderer);
+            });
         }
     }
 }
@@ -706,12 +701,18 @@ impl Obstacle for Platform {
 }
 
 pub struct Barrier {
-    image: Image
+    image: Image,
 }
-
+impl Barrier {
+    pub fn new(image: Image) -> Self {
+        Barrier { image }
+    }
+}
 impl Obstacle for Barrier {
     fn check_intersection(&self, boy: &mut RedHatBoy) {
-        todo!()
+        if boy.bounding_box().intersects(&self.image.bounding_box()) {
+            boy.knock_out()
+        }
     }
     fn draw(&self, renderer: &Renderer) {
         self.image.draw(renderer);
@@ -719,6 +720,4 @@ impl Obstacle for Barrier {
     fn move_horizonatally(&mut self, x: i16) {
         self.image.move_horizonatally(x);
     }
-
-
 }
