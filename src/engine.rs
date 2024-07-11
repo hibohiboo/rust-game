@@ -12,23 +12,10 @@ use std::sync::Mutex;
 use futures::channel::oneshot::channel;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-// use wasm_bindgen_test::__rt::browser;
 use async_trait::async_trait;
+// use wasm_bindgen_test::__rt::browser;
 
-pub struct Rect {
-    pub x:i16,
-    pub y:i16,
-    pub width:i16,
-    pub height:i16,
-}
-impl Rect {
-    pub fn intersects(&self, other: &Rect) -> bool {
-        self.x < other.x + other.width
-            && self.x + self.width > other.x
-            && self.y < other.y + other.height
-            && self.y + self.height > other.y
-    }
-}
+
 #[derive(Clone, Copy, Default)]
 pub struct Point {
     pub x: i16,
@@ -56,127 +43,127 @@ pub struct Sheet {
 }
 
  
-// #[derive(Default)]
-// pub struct Rect {
-//     pub position: Point,
-//     pub width: i16,
-//     pub height: i16,
-// }
+#[derive(Default)]
+pub struct Rect {
+    pub position: Point,
+    pub width: i16,
+    pub height: i16,
+}
 
-// impl Rect {
-//     pub const fn new(position: Point, width: i16, height: i16) -> Self {
-//         Rect {
-//             position,
-//             width,
-//             height,
-//         }
-//     }
+impl Rect {
+    pub const fn new(position: Point, width: i16, height: i16) -> Self {
+        Rect {
+            position,
+            width,
+            height,
+        }
+    }
 
-//     pub const fn new_from_x_y(x: i16, y: i16, width: i16, height: i16) -> Self {
-//         Rect::new(Point { x, y }, width, height)
-//     }
+    pub const fn new_from_x_y(x: i16, y: i16, width: i16, height: i16) -> Self {
+        Rect::new(Point { x, y }, width, height)
+    }
 
-//     pub fn intersects(&self, rect: &Rect) -> bool {
-//         self.x < rect.right()
-//             && self.right() > rect.x
-//             && self.y() < rect.bottom()
-//             && self.bottom() > rect.y()
-//     }
+    pub fn intersects(&self, rect: &Rect) -> bool {
+        self.x() < rect.right()
+            && self.right() > rect.x()
+            && self.y() < rect.bottom()
+            && self.bottom() > rect.y()
+    }
 
-//     pub fn right(&self) -> i16 {
-//         self.x + self.width
-//     }
+    pub fn right(&self) -> i16 {
+        self.x() + self.width
+    }
 
-//     pub fn bottom(&self) -> i16 {
-//         self.y() + self.height
-//     }
+    pub fn bottom(&self) -> i16 {
+        self.y() + self.height
+    }
 
-//     pub fn set_x(&mut self, x: i16) {
-//         self.position.x = x
-//     }
+    pub fn set_x(&mut self, x: i16) {
+        self.position.x = x
+    }
 
-//     pub fn x(&self) -> i16 {
-//         self.position.x
-//     }
+    pub fn x(&self) -> i16 {
+        self.position.x
+    }
 
-//     pub fn y(&self) -> i16 {
-//         self.position.y
-//     }
-// }
+    pub fn y(&self) -> i16 {
+        self.position.y
+    }
+}
 
-// #[cfg(test)] // Only compile the following module when running tests
-// mod tests { // 他のコードから隔離するため mod キーワードでモジュール化する
-//     use super::*;
+#[cfg(test)] // Only compile the following module when running tests
+mod tests { // 他のコードから隔離するため mod キーワードでモジュール化する
+    use super::*;
 
-//     #[test]
-//     fn two_rects_that_intersect_on_the_left() {
-//         let rect1 = Rect {
-//             position: Point { x: 10, y: 10 },
-//             height: 100,
-//             width: 100,
-//         };
+    #[test]
+    fn two_rects_that_intersect_on_the_left() {
+        let rect1 = Rect {
+            position: Point { x: 10, y: 10 },
+            height: 100,
+            width: 100,
+        };
 
-//         let rect2 = Rect {
-//             position: Point { x: 0, y: 10 },
-//             height: 100,
-//             width: 100,
-//         };
+        let rect2 = Rect {
+            position: Point { x: 0, y: 10 },
+            height: 100,
+            width: 100,
+        };
 
-//         assert_eq!(rect2.intersects(&rect1), true);
-//     }
+        assert_eq!(rect2.intersects(&rect1), true);
+    }
 
-//     // 四角形が上から重なっている場合
-//     #[test]
-//     fn two_rects_that_intersect_on_the_top() {
-//         let rect1 = Rect {
-//             position: Point { x: 10, y: 10 },
-//             height: 100,
-//             width: 100,
-//         };
+    // 四角形が上から重なっている場合
+    #[test]
+    fn two_rects_that_intersect_on_the_top() {
+        let rect1 = Rect {
+            position: Point { x: 10, y: 10 },
+            height: 100,
+            width: 100,
+        };
 
-//         let rect2 = Rect {
-//             position: Point { x: 10, y: 0 },
-//             height: 100,
-//             width: 100,
-//         };
+        let rect2 = Rect {
+            position: Point { x: 10, y: 0 },
+            height: 100,
+            width: 100,
+        };
 
-//         assert_eq!(rect2.intersects(&rect1), true);
-//     }
-//     // 四角形が右から重なっている場合
-//     #[test]
-//     fn two_rects_that_intersect_on_the_right() {
-//         let rect1 = Rect {
-//             position: Point { x: 10, y: 10 },
-//             height: 100,
-//             width: 100,
-//         };
+        assert_eq!(rect2.intersects(&rect1), true);
+    }
+    // 四角形が右から重なっている場合
+    #[test]
+    fn two_rects_that_intersect_on_the_right() {
+        let rect1 = Rect {
+            position: Point { x: 10, y: 10 },
+            height: 100,
+            width: 100,
+        };
 
-//         let rect2 = Rect {
-//             position: Point { x: 10, y: 10 },
-//             height: 100,
-//             width: 100,
-//         };
+        let rect2 = Rect {
+            position: Point { x: 10, y: 10 },
+            height: 100,
+            width: 100,
+        };
 
-//         assert_eq!(rect2.intersects(&rect1), true);
-//     }
-//     // 四角形が重なっていない場合
-//     #[test]
-//     fn two_rects_that_do_not_intersect() {
-//         let rect1 = Rect {
-//             position: Point { x: 10, y: 10 },
-//             height: 100,
-//             width: 100,
-//         };
+        assert_eq!(rect2.intersects(&rect1), true);
+    }
+    // 四角形が重なっていない場合
+    #[test]
+    fn two_rects_that_do_not_intersect() {
+        let rect1 = Rect {
+            position: Point { x: 10, y: 10 },
+            height: 100,
+            width: 100,
+        };
 
-//         let rect2 = Rect {
-//             position: Point { x: 200, y: 200 },
-//             height: 100,
-//             width: 100,
-//         };
+        let rect2 = Rect {
+            position: Point { x: 200, y: 200 },
+            height: 100,
+            width: 100,
+        };
 
-//         assert_eq!(rect2.intersects(&rect1), false);
-//     }
-// }
+        assert_eq!(rect2.intersects(&rect1), false);
+    }
+}
 
 
 pub async fn load_image(source: &str) -> Result<HtmlImageElement> {
@@ -269,17 +256,17 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn clear(&self, rect: &Rect) {
-        self.context.clear_rect(rect.x.into(), rect.y.into(), rect.width.into(), rect.height.into());
+        self.context.clear_rect(rect.position.x.into(), rect.position.y.into(), rect.width.into(), rect.height.into());
     }
     pub fn draw_image(&self, image: &HtmlImageElement, frame: &Rect, destination: &Rect) {
         self.context.draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
             image,
-            frame.x.into(),
-            frame.y.into(),
+            frame.position.x.into(),
+            frame.position.y.into(),
             frame.width.into(),
             frame.height.into(),
-            destination.x.into(),
-            destination.y.into(),
+            destination.position.x.into(),
+            destination.position.y.into(),
             destination.width.into(),
             destination.height.into(),
         ).expect("Drawing is thrown exceptions! Unrecoverable error.");
@@ -366,12 +353,7 @@ pub struct Image {
 
 impl Image {
     pub fn new(element: HtmlImageElement, position: Point) -> Self {
-        let bounding_box = Rect {
-            x: position.x.into(),
-            y: position.y.into(),
-            width: element.width() as i16,
-            height: element.height() as i16
-        };
+        let bounding_box = Rect::new_from_x_y(position.x, position.y, element.width() as i16, element.height() as i16);;
         Self {
             element,
             position,
@@ -389,10 +371,10 @@ impl Image {
     }
 
     pub fn set_x(&mut self, x: i16) {
-        self.bounding_box.x = x ;
+        self.bounding_box.set_x(x) ;
         self.position.x = x;
     }
     pub fn right(&self) -> i16 {
-        (self.bounding_box.x + self.bounding_box.width) as i16
+        (self.bounding_box.x() + self.bounding_box.width) as i16
     }
 }
