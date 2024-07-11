@@ -347,7 +347,6 @@ fn prepare_input () -> Result<UnboundedReceiver<KeyPress>>{
 
 pub struct Image {
     element: HtmlImageElement,
-    position: Point,
     bounding_box: Rect
 }
 
@@ -356,23 +355,22 @@ impl Image {
         let bounding_box = Rect::new_from_x_y(position.x, position.y, element.width() as i16, element.height() as i16);;
         Self {
             element,
-            position,
             bounding_box
         }
     }
     pub fn draw(&self, renderer: &Renderer) {
-        renderer.draw_entire_image(&self.element, self.position);
+        renderer.draw_entire_image(&self.element, self.bounding_box.position);
     }
     pub fn bounding_box(&self) -> &Rect {
         &self.bounding_box
     }
     pub fn move_horizonatally(&mut self, distance: i16) {
-        self.set_x(self.position.x + distance);
+        self.set_x(self.bounding_box.position.x + distance);
     }
 
     pub fn set_x(&mut self, x: i16) {
         self.bounding_box.set_x(x) ;
-        self.position.x = x;
+        self.bounding_box.position.x = x;
     }
     pub fn right(&self) -> i16 {
         (self.bounding_box.x() + self.bounding_box.width) as i16
