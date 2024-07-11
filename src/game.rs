@@ -623,24 +623,7 @@ impl Platform {
             position,
         }
     }
-    fn draw(&self, renderer: &Renderer) {
-        let platform = self.sheet.frames.get("13.png").expect("Cell not found");
-        renderer.draw_image(
-            &self.image,
-            &Rect::new_from_x_y(
-                platform.frame.x.into(),
-                platform.frame.y.into(),
-                (platform.frame.w * 3).into(),
-                platform.frame.h.into(),
-            ),
-            &Rect::new_from_x_y(
-                self.position.x.into(),
-                self.position.y.into(),
-                (platform.frame.w * 3).into(),
-                platform.frame.h.into(),
-            ),
-        );
-    }
+
     fn destination_box(&self) -> Rect {
         let platform = self.sheet.frames.get("13.png").expect("Cell not found");
         Rect::new_from_x_y(
