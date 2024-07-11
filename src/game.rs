@@ -22,11 +22,18 @@ impl WalkTheDog {
         WalkTheDog::Loading
     }
 }
+
 pub struct Walk {
     boy: RedHatBoy,
     background: Image,
     stone: Image,
     platform: Platform,
+}
+
+impl Walk {
+    fn velocity(&self)->i16{
+        -self.boy.walking_speed()
+    }
 }
 
 #[async_trait(?Send)]
@@ -41,7 +48,10 @@ impl Game for WalkTheDog {
                 let platform = Platform::new(
                     platform_sheet.into_serde::<Sheet>()?,
                     engine::load_image("tiles.png").await?,
-                    Point { x: FIRST_PLATFORM, y: LOW_PLATFORM },
+                    Point {
+                        x: FIRST_PLATFORM,
+                        y: LOW_PLATFORM,
+                    },
                 );
                 let rhb = RedHatBoy::new(
                     json.into_serde::<Sheet>()?,
@@ -71,6 +81,10 @@ impl Game for WalkTheDog {
             }
 
             walk.boy.update();
+
+            // boy以外のすべてのオブジェクトを動かす
+            walk.platform.position.x += walk.velocity();
+            walk.stone.move_horizonatally(walk.velocity()) ;
 
             for bounding_box in &walk.platform.bounding_boxes() {
                 if walk.boy.bounding_box().intersects(bounding_box) {
@@ -190,6 +204,9 @@ impl RedHatBoy {
     fn velocity_y(&self) -> i16 {
         self.state_machine.context().velocity.y
     }
+    fn walking_speed(&self) -> i16 {
+        self.state_machine.context().velocity.x
+    }
 }
 
 mod red_hat_boy_states {
@@ -245,7 +262,6 @@ mod red_hat_boy_states {
             } else {
                 self.frame = 0;
             }
-            self.position.x += self.velocity.x;
             self.position.y += self.velocity.y;
 
             if self.position.y > FLOOR {
