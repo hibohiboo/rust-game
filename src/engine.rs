@@ -403,7 +403,7 @@ pub struct SpriteSheet {
 
 impl SpriteSheet {
     pub async fn new(sheet: Sheet, image: HtmlImageElement) -> Self {
-        Self { image, sheet }
+        SpriteSheet { image, sheet }
     }
     pub fn cell(&self, name: &str) -> Option<&Cell> {
         self.sheet.frames.get(name)
