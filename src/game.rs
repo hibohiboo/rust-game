@@ -84,7 +84,8 @@ impl Game for WalkTheDog {
 
             // boy以外のすべてのオブジェクトを動かす
             walk.platform.position.x += walk.velocity();
-            walk.stone.move_horizonatally(walk.velocity()) ;
+            walk.stone.move_horizonatally(walk.velocity());
+            walk.background.move_horizonatally(walk.velocity());
 
             for bounding_box in &walk.platform.bounding_boxes() {
                 if walk.boy.bounding_box().intersects(bounding_box) {
