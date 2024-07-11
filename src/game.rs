@@ -619,12 +619,24 @@ impl From<FallingEndState> for RedHatBoyStateMachine {
 
 struct Platform {
     sheet: Rc<SpriteSheet>,
+    bounding_boxes: Vec<Rect>,
+    sprites: Vec<Cell>,
     position: Point,
 }
 
 impl Platform {
-    fn new(sheet: Rc<SpriteSheet>, position: Point) -> Self {
-        Platform { sheet, position }
+    fn new(sheet: Rc<SpriteSheet>, position: Point, sprite_names: &[&str], bounding_boxs: &[Rect]) -> Self {
+        let sprites = sprite_names
+            .iter()
+            .filter_map(|name| sheet.cell(name).cloned())
+            .collect();
+        let bounding_boxes = bounding_boxs.iter()
+        .map(|bounding_box|  {Rect::new_from_x_y(
+            bounding_box.x()+position.x,
+            bounding_box.y()+position.y,
+            bounding_box.width,
+            bounding_box.height)}).collect();
+        Platform { sheet, position, sprites, bounding_boxes }
     }
 
     fn destination_box(&self) -> Rect {
@@ -636,30 +648,8 @@ impl Platform {
             platform.frame.h.into(),
         )
     }
-    fn bounding_boxes(&self) -> Vec<Rect> {
-        const X_OFFSET: i16 = 60;
-        const END_HEIGHT: i16 = 54;
-        let destination_box = self.destination_box();
-        let bounding_box_one = Rect::new_from_x_y(
-            destination_box.position.x,
-            destination_box.position.y,
-            X_OFFSET,
-            END_HEIGHT,
-        );
-        let bounding_box_two = Rect::new_from_x_y(
-            destination_box.position.x + X_OFFSET,
-            destination_box.position.y,
-            destination_box.width - (X_OFFSET * 2),
-            destination_box.height,
-        );
-        let bounding_box_three = Rect::new_from_x_y(
-            destination_box.position.x + destination_box.width - X_OFFSET,
-            destination_box.position.y,
-            X_OFFSET,
-            END_HEIGHT,
-        );
-
-        vec![bounding_box_one, bounding_box_two, bounding_box_three]
+    fn bounding_boxes(&self) -> &Vec<Rect> {
+        &self.bounding_boxes
     }
 }
 
