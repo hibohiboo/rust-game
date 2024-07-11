@@ -704,3 +704,21 @@ impl Obstacle for Platform {
         }
     }
 }
+
+pub struct Barrier {
+    image: Image
+}
+
+impl Obstacle for Barrier {
+    fn check_intersection(&self, boy: &mut RedHatBoy) {
+        todo!()
+    }
+    fn draw(&self, renderer: &Renderer) {
+        self.image.draw(renderer);
+    }
+    fn move_horizonatally(&mut self, x: i16) {
+        self.image.move_horizonatally(x);
+    }
+
+
+}
