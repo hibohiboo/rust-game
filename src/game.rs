@@ -58,6 +58,12 @@ impl Game for WalkTheDog {
                         x: FIRST_PLATFORM,
                         y: LOW_PLATFORM,
                     },
+                    &["13.png", "14.png", "15.png"],
+                    &[
+                        Rect::new_from_x_y(0, 0, 60, 54),
+                        Rect::new_from_x_y(60, 0, 384 - 60*2, 93),
+                        Rect::new_from_x_y(384-60, 0, 60, 54),
+                    ],
                 );
                 let rhb = RedHatBoy::new(
                     json.into_serde::<Sheet>()?,
@@ -662,25 +668,26 @@ pub trait Obstacle {
 
 impl Obstacle for Platform {
     fn draw(&self, renderer: &Renderer) {
-        let platform = self.sheet.cell("13.png").expect("Cell not found");
-        self.sheet.draw(
-            renderer,
-            &Rect::new_from_x_y(
-                platform.frame.x.into(),
-                platform.frame.y.into(),
-                (platform.frame.w * 3).into(),
-                platform.frame.h.into(),
-            ),
-            &Rect::new_from_x_y(
-                self.position.x.into(),
-                self.position.y.into(),
-                (platform.frame.w * 3).into(),
-                platform.frame.h.into(),
-            ),
-        );
+        let mut x = 0;
+        self.sprites.iter().for_each(|sprite| {
+            self.sheet.draw(
+                renderer,
+                &Rect::new_from_x_y(sprite.frame.x,sprite.frame.y, sprite.frame.w, sprite.frame.h),
+                &Rect::new_from_x_y(
+                    self.position.x + x,
+                    self.position.y,
+                    sprite.frame.w,
+                    sprite.frame.h,
+                ),
+            );
+            x += sprite.frame.w;
+        });
     }
     fn move_horizonatally(&mut self, x: i16) {
         self.position.x += x;
+        self.bounding_boxes.iter_mut().for_each(|bounding_box| {
+            bounding_box.set_x(bounding_box.position.x + x);
+        });
     }
     fn check_intersection(&self, boy: &mut RedHatBoy) {
         if let Some(box_to_land_on) = self
