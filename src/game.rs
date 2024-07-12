@@ -4,7 +4,7 @@ use self::red_hat_boy_states::*;
 use crate::{
     browser,
     engine::{self, Cell, Game, Image, KeyState, Point, Rect, Renderer, Sheet, SpriteSheet},
-    segments::stone_and_platform,
+    segments::{platform_and_stone, stone_and_platform},
 };
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -44,9 +44,14 @@ impl Walk {
     }
     fn generate_next_segment(&mut self) {
         let mut rng = thread_rng();
-        let next_segmenet = rng.gen_range(0..1);
+        let next_segmenet = rng.gen_range(0..2);
         let mut next_obstacles = match next_segmenet {
             0 => stone_and_platform(
+                self.stone.clone(),
+                self.obstacle_sheet.clone(),
+                self.timeline + OBSTACLE_BUFFER,
+            ),
+            1 => platform_and_stone(
                 self.stone.clone(),
                 self.obstacle_sheet.clone(),
                 self.timeline + OBSTACLE_BUFFER,
