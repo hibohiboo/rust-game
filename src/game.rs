@@ -14,6 +14,8 @@ const HEIGHT: i16 = 600;
 const LOW_PLATFORM: i16 = 420;
 const FIRST_PLATFORM: i16 = 370;
 const HIGH_PLATFORM: i16 = 375;
+const TIMELINE_MINIMUM: i16 = 1000;
+const OBSTACLE_BUFFER: i16 = 20; // ちょうどよさそうだった値。セグメント同士が近づきすぎないための値
 pub enum WalkTheDog {
     Loading,
     Loaded(Walk),
@@ -119,6 +121,18 @@ impl Game for WalkTheDog {
                 obstacle.move_horizonatally(velocity);
                 obstacle.check_intersection(&mut walk.boy);
             });
+
+            walk.obstacles.iter_mut().for_each(|obstacle| {
+                obstacle.move_horizonatally(velocity);
+                obstacle.check_intersection(&mut walk.boy);
+            });
+            if walk.timeline < TIMELINE_MINIMUM {
+                let mut next_obstacles = stone_and_platform(walk.stone.clone(), walk.obstacle_sheet.clone(), walk.timeline + OBSTACLE_BUFFER);
+                walk.timeline = rightmost(&next_obstacles);
+                walk.obstacles.append(&mut next_obstacles);
+            }else {
+                walk.timeline += velocity;
+            }
         }
     }
     fn draw(&self, renderer: &Renderer) {
