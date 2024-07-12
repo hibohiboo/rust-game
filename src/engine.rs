@@ -1,5 +1,6 @@
 use crate::browser::LoopClosure;
 use crate::browser::{self};
+use crate::sound;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use futures::channel::mpsc::{unbounded, UnboundedReceiver};
@@ -411,4 +412,27 @@ impl SpriteSheet {
   pub fn draw(&self, renderer: &Renderer, source: &Rect, destination: &Rect) {
     renderer.draw_image(&self.image, source, destination);
   }
+}
+
+#[derive(Clone)]
+pub struct Audio {
+  context: web_sys::AudioContext,
+}
+impl Audio {
+  pub fn new() -> Result<Self> {
+    let context = sound::create_audo_context()?;
+    Ok(Audio { context })
+  }
+  pub async fn load_sound(&self, path: &str) -> Result<Sound> {
+    let array_buffer = browser::fetch_array_buffer(path).await?;
+    let buffer = sound::decode_audio_data(&self.context, &array_buffer).await?;
+    Ok(Sound { buffer })
+  }
+  pub fn play_sound(&self, sound: &Sound) -> Result<()> {
+    sound::play_sound(&self.context, &sound.buffer)
+  }
+}
+#[derive(Clone)]
+pub struct Sound {
+  buffer: web_sys::AudioBuffer,
 }
