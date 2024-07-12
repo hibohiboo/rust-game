@@ -1,4 +1,6 @@
 use anyhow::{anyhow, Result};
+use js_sys::ArrayBuffer;
+use wasm_bindgen_futures::JsFuture;
 use web_sys::{AudioBuffer, AudioBufferSourceNode, AudioContext, AudioDestinationNode, AudioNode};
 
 pub fn create_audo_context() -> Result<AudioContext> {
@@ -23,4 +25,16 @@ pub fn play_sound(context: &AudioContext, buffer: &AudioBuffer) -> Result<()> {
   source
     .start()
     .map_err(|err| anyhow!("Failed to start source: {:#?}", err))
+}
+
+pub async fn decode_audio_data(context: &AudioContext, array_buffer: &ArrayBuffer) -> Result<AudioBuffer> {
+  JsFuture::from(
+    context
+      .decode_audio_data(&array_buffer)
+      .map_err(|err| anyhow!("Failed to decode audio data: {:#?}", err))?,
+  )
+  .await
+  .map_err(|err| anyhow!("Failed to decode audio data: {:#?}", err))?
+  .dyn_into()
+  .map_err(|element| anyhow!("Error converting {:#?} to AudioBuffer", element))
 }

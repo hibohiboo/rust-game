@@ -1,4 +1,6 @@
 use anyhow::{anyhow, Result};
+
+use js_sys::ArrayBuffer;
 use wasm_bindgen::{closure::WasmClosure, closure::WasmClosureFnOnce, prelude::Closure, JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement, Response, Window};
@@ -64,7 +66,17 @@ pub async fn fetch_response(resource: &str) -> Result<Response> {
     .dyn_into()
     .map_err(|element| anyhow!("Error converting {:#?} to Response", element))
 }
-
+pub async fn fetch_array_buffer(resource: &str) -> Result<ArrayBuffer> {
+  let response = fetch_response(resource).await?;
+  let array_buffer = response
+    .array_buffer()
+    .map_err(|err| anyhow!("Failed to get array buffer: {:#?}", err))?;
+  JsFuture::from(array_buffer)
+    .await
+    .map_err(|err| anyhow!("Failed to parse array buffer: {:#?}", err))?
+    .dyn_into()
+    .map_err(|element| anyhow!("Error converting {:#?} to ArrayBuffer", element))
+}
 pub async fn fetch_json(json_path: &str) -> Result<JsValue> {
   let response = fetch_response(json_path).await?;
   let res: Response = response
