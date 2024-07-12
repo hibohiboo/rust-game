@@ -731,3 +731,7 @@ impl Obstacle for Barrier {
         self.image.right()
     }
 }
+
+fn rightmost(obstacle_list: &Vec<Box<dyn Obstacle>>) -> i16 {
+    obstacle_list.iter().map(|obstacle| obstacle.right()).max_by(|x,y|x.cmp(&y)).unwrap_or(0)
+}
