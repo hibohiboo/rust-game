@@ -3,7 +3,7 @@ use std::rc::Rc;
 use self::red_hat_boy_states::*;
 use crate::{
     browser,
-    engine::{self, Cell, Game, Image, KeyState, Point, Rect, Renderer, Sheet, SpriteSheet},
+    engine::{self, Cell, Game, Image, KeyState, Point, Rect, Renderer, Sheet, SpriteSheet}, segments::stone_and_platform,
 };
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -82,10 +82,7 @@ impl Game for WalkTheDog {
                             },
                         ),
                     ],
-                    obstacles: vec![
-                        Box::new(Barrier::new(Image::new(stone, Point { x: 250, y: 546 }))),
-                        Box::new(platform),
-                    ],
+                    obstacles: stone_and_platform(stone, sprite_sheet.clone(), 0),
                     obstacle_sheet: sprite_sheet,
                 })))
             }
@@ -623,7 +620,7 @@ impl From<FallingEndState> for RedHatBoyStateMachine {
     }
 }
 
-struct Platform {
+pub struct Platform {
     sheet: Rc<SpriteSheet>,
     bounding_boxes: Vec<Rect>,
     sprites: Vec<Cell>,
@@ -631,7 +628,7 @@ struct Platform {
 }
 
 impl Platform {
-    fn new(sheet: Rc<SpriteSheet>, position: Point, sprite_names: &[&str], bounding_boxs: &[Rect]) -> Self {
+    pub fn new(sheet: Rc<SpriteSheet>, position: Point, sprite_names: &[&str], bounding_boxs: &[Rect]) -> Self {
         let sprites = sprite_names
             .iter()
             .filter_map(|name| sheet.cell(name).cloned())
