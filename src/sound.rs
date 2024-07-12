@@ -19,10 +19,21 @@ fn connect_with_audio_node(source: &AudioBufferSourceNode, destination: &AudioDe
     .connect_with_audio_node(&destination)
     .map_err(|err| anyhow!("Failed to connect source with destination: {:#?}", err))
 }
-pub fn play_sound(context: &AudioContext, buffer: &AudioBuffer) -> Result<()> {
+fn create_track_source(context: &AudioContext, buffer: &AudioBuffer) -> Result<AudioBufferSourceNode> {
   let source = craete_buffer_source(&context)?;
   source.set_buffer(Some(&buffer));
   connect_with_audio_node(&source, &context.destination())?;
+  Ok(source)
+}
+pub enum LOOPING {
+  NO,
+  YES,
+}
+pub fn play_sound(context: &AudioContext, buffer: &AudioBuffer, looping: LOOPING) -> Result<()> {
+  let source = create_track_source(context, buffer)?;
+  if matches!(looping, LOOPING::YES) {
+    source.set_loop(true);
+  }
   source
     .start()
     .map_err(|err| anyhow!("Failed to start source: {:#?}", err))
