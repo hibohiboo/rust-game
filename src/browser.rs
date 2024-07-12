@@ -58,8 +58,15 @@ pub async fn fetch_with_str(resource: &str) -> Result<JsValue> {
     .map_err(|err| anyhow!("Failed to fetch resource: {:#?}", err))
 }
 
+pub async fn fetch_response(resource: &str) -> Result<Response> {
+  let response = fetch_with_str(resource).await?;
+  response
+    .dyn_into()
+    .map_err(|element| anyhow!("Error converting {:#?} to Response", element))
+}
+
 pub async fn fetch_json(json_path: &str) -> Result<JsValue> {
-  let response = fetch_with_str(json_path).await?;
+  let response = fetch_response(json_path).await?;
   let res: Response = response
     .dyn_into()
     .map_err(|element| anyhow!("Error converting {:#?} to Response", element))?;
