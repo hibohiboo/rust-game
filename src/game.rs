@@ -41,9 +41,9 @@ impl Walk {
         -self.boy.walking_speed()
     }
     fn generate_next_segment(&mut self) {
-        let next_segment = stone_and_platform(self.stone.clone(), self.obstacle_sheet.clone(), rightmost(&self.obstacles) + OBSTACLE_BUFFER);
-        self.obstacles.extend(next_segment);
-        self.timeline = 0;
+        let mut next_obstacles = stone_and_platform(self.stone.clone(), self.obstacle_sheet.clone(), self.timeline + OBSTACLE_BUFFER);
+        self.timeline = rightmost(&next_obstacles);
+        self.obstacles.append(&mut next_obstacles);
     }
 }
 
