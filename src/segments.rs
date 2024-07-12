@@ -2,7 +2,10 @@ use std::rc::Rc;
 
 use web_sys::HtmlImageElement;
 
-use crate::{engine::{Image, Point, Rect, SpriteSheet}, game::{Barrier, Obstacle, Platform}};
+use crate::{
+    engine::{Image, Point, Rect, SpriteSheet},
+    game::{Barrier, Obstacle, Platform},
+};
 
 const LOW_PLATFORM: i16 = 420;
 const HIGH_PLATFORM: i16 = 375;
@@ -28,11 +31,27 @@ const FLOATING_PLATFORM_BOUNDING_BOXES: [Rect; 3] = [
         PLATFORM_EDGE_HEIGHT,
     ),
 ];
-pub fn stone_and_platform(stone: HtmlImageElement, sprite_sheet: Rc<SpriteSheet>,offset_x:i16)->Vec<Box<dyn Obstacle>> {
-    const INITIAL_STONE_OFFSET : i16 = 250;
+pub fn stone_and_platform(
+    stone: HtmlImageElement,
+    sprite_sheet: Rc<SpriteSheet>,
+    offset_x: i16,
+) -> Vec<Box<dyn Obstacle>> {
+    const INITIAL_STONE_OFFSET: i16 = 250;
     vec![
-        Box::new(Barrier::new(Image::new(stone,Point{x:offset_x + INITIAL_STONE_OFFSET,y:STONE_ON_GROUND}))),
-        Box::new(create_floating_platform(sprite_sheet,Point{x:offset_x + FIRST_PLATFORM,y:LOW_PLATFORM})),
+        Box::new(Barrier::new(Image::new(
+            stone,
+            Point {
+                x: offset_x + INITIAL_STONE_OFFSET,
+                y: STONE_ON_GROUND,
+            },
+        ))),
+        Box::new(create_floating_platform(
+            sprite_sheet,
+            Point {
+                x: offset_x + FIRST_PLATFORM,
+                y: LOW_PLATFORM,
+            },
+        )),
     ]
 }
 
@@ -45,15 +64,13 @@ fn create_floating_platform(sprite_sheet: Rc<SpriteSheet>, position: Point) -> P
     )
 }
 
-
 pub fn platform_and_stone(
     stone: HtmlImageElement,
     sprite_sheet: Rc<SpriteSheet>,
     offset_x: i16,
 ) -> Vec<Box<dyn Obstacle>> {
-    const INITIAL_STONE_OFFSET: i16 = 400;
+    const INITIAL_STONE_OFFSET: i16 =400;
     const INITIAL_PLATFORM_OFFSET: i16 = 200;
-
     vec![
         Box::new(Barrier::new(Image::new(
             stone,
