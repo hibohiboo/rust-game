@@ -13,9 +13,6 @@ use rand::{thread_rng, Rng};
 use web_sys::HtmlImageElement;
 
 const HEIGHT: i16 = 600;
-const LOW_PLATFORM: i16 = 420;
-const FIRST_PLATFORM: i16 = 370;
-const HIGH_PLATFORM: i16 = 375;
 const TIMELINE_MINIMUM: i16 = 1000;
 const OBSTACLE_BUFFER: i16 = 20; // ちょうどよさそうだった値。セグメント同士が近づきすぎないための値
 pub enum WalkTheDog {
@@ -687,15 +684,6 @@ impl Platform {
         }
     }
 
-    fn destination_box(&self) -> Rect {
-        let platform = self.sheet.cell("13.png").expect("Cell not found");
-        Rect::new_from_x_y(
-            self.position.x.into(),
-            self.position.y.into(),
-            (platform.frame.w * 3).into(),
-            platform.frame.h.into(),
-        )
-    }
     fn bounding_boxes(&self) -> &Vec<Rect> {
         &self.bounding_boxes
     }
