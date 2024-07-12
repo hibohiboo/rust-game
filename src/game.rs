@@ -29,7 +29,9 @@ pub struct Walk {
     boy: RedHatBoy,
     backgrounds: [Image; 2],
     obstacles: Vec<Box<dyn Obstacle>>,
-    obstacle_sheet: Rc<SpriteSheet>
+    obstacle_sheet: Rc<SpriteSheet>,
+    stone: HtmlImageElement,
+    timeline: i16
 }
 
 impl Walk {
@@ -52,24 +54,14 @@ impl Game for WalkTheDog {
                     tiles.into_serde::<Sheet>()?,
                     engine::load_image("tiles.png").await?,
                 ).await);
-                let platform = Platform::new(
-                    sprite_sheet.clone(),
-                    Point {
-                        x: FIRST_PLATFORM,
-                        y: LOW_PLATFORM,
-                    },
-                    &["13.png", "14.png", "15.png"],
-                    &[
-                        Rect::new_from_x_y(0, 0, 60, 54),
-                        Rect::new_from_x_y(60, 0, 384 - 60*2, 93),
-                        Rect::new_from_x_y(384-60, 0, 60, 54),
-                    ],
-                );
+
                 let rhb = RedHatBoy::new(
                     json.into_serde::<Sheet>()?,
                     engine::load_image("rhb.png").await?,
                 );
                 let background_width = background.width() as i16;
+                let starting_obstacles = stone_and_platform(stone.clone(), sprite_sheet.clone(), 0);
+                let timeline = rightmost(&starting_obstacles);
                 Ok(Box::new(WalkTheDog::Loaded(Walk {
                     boy: rhb,
                     backgrounds: [
@@ -82,8 +74,10 @@ impl Game for WalkTheDog {
                             },
                         ),
                     ],
-                    obstacles: stone_and_platform(stone, sprite_sheet.clone(), 0),
+                    obstacles: starting_obstacles,
                     obstacle_sheet: sprite_sheet,
+                    stone,
+                    timeline
                 })))
             }
             WalkTheDog::Loaded(_) => Err(anyhow!("Game already initialized")),
