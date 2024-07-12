@@ -1,7 +1,5 @@
 use anyhow::{anyhow, Result};
-use wasm_bindgen::{
-  closure::WasmClosure, closure::WasmClosureFnOnce, prelude::Closure, JsCast, JsValue,
-};
+use wasm_bindgen::{closure::WasmClosure, closure::WasmClosureFnOnce, prelude::Closure, JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement, Response, Window};
 

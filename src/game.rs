@@ -550,15 +550,9 @@ impl RedHatBoyStateMachine {
       (RedHatBoyStateMachine::Jumping(state), Event::KnockOut) => state.knock_out().into(),
       (RedHatBoyStateMachine::Running(state), Event::KnockOut) => state.knock_out().into(),
       (RedHatBoyStateMachine::Falling(state), Event::Update) => state.update().into(),
-      (RedHatBoyStateMachine::Jumping(state), Event::Land(position)) => {
-        state.land_on(position).into()
-      }
-      (RedHatBoyStateMachine::Running(state), Event::Land(position)) => {
-        state.land_on(position).into()
-      }
-      (RedHatBoyStateMachine::Sliding(state), Event::Land(position)) => {
-        state.land_on(position).into()
-      }
+      (RedHatBoyStateMachine::Jumping(state), Event::Land(position)) => state.land_on(position).into(),
+      (RedHatBoyStateMachine::Running(state), Event::Land(position)) => state.land_on(position).into(),
+      (RedHatBoyStateMachine::Sliding(state), Event::Land(position)) => state.land_on(position).into(),
       _ => self,
     }
   }
@@ -655,12 +649,7 @@ pub struct Platform {
 }
 
 impl Platform {
-  pub fn new(
-    sheet: Rc<SpriteSheet>,
-    position: Point,
-    sprite_names: &[&str],
-    bounding_boxs: &[Rect],
-  ) -> Self {
+  pub fn new(sheet: Rc<SpriteSheet>, position: Point, sprite_names: &[&str], bounding_boxs: &[Rect]) -> Self {
     let sprites = sprite_names
       .iter()
       .filter_map(|name| sheet.cell(name).cloned())

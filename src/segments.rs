@@ -31,11 +31,7 @@ const FLOATING_PLATFORM_BOUNDING_BOXES: [Rect; 3] = [
     PLATFORM_EDGE_HEIGHT,
   ),
 ];
-pub fn stone_and_platform(
-  stone: HtmlImageElement,
-  sprite_sheet: Rc<SpriteSheet>,
-  offset_x: i16,
-) -> Vec<Box<dyn Obstacle>> {
+pub fn stone_and_platform(stone: HtmlImageElement, sprite_sheet: Rc<SpriteSheet>, offset_x: i16) -> Vec<Box<dyn Obstacle>> {
   const INITIAL_STONE_OFFSET: i16 = 250;
   vec![
     Box::new(Barrier::new(Image::new(
@@ -64,11 +60,7 @@ fn create_floating_platform(sprite_sheet: Rc<SpriteSheet>, position: Point) -> P
   )
 }
 
-pub fn platform_and_stone(
-  stone: HtmlImageElement,
-  sprite_sheet: Rc<SpriteSheet>,
-  offset_x: i16,
-) -> Vec<Box<dyn Obstacle>> {
+pub fn platform_and_stone(stone: HtmlImageElement, sprite_sheet: Rc<SpriteSheet>, offset_x: i16) -> Vec<Box<dyn Obstacle>> {
   const INITIAL_STONE_OFFSET: i16 = 400;
   const INITIAL_PLATFORM_OFFSET: i16 = 200;
   vec![

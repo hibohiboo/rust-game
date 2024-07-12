@@ -1,6 +1,7 @@
-max_width = 100
+# rustfmt --print-config default rustfmt.toml で出力
+max_width = 150 # デフォルトから変更
 hard_tabs = false
-tab_spaces = 2
+tab_spaces = 2 # デフォルトから変更
 newline_style = "Auto"
 indent_style = "Block"
 use_small_heuristics = "Default"
