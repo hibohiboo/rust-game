@@ -30,6 +30,9 @@ enum WalkTheDogStateMachine {
   GameOver(WalkTheDogState<GameOver>),
 }
 impl WalkTheDogStateMachine {
+  fn new(walk: Walk) -> Self {
+    WalkTheDogStateMachine::Ready(WalkTheDogState::new(walk))
+  }
   fn update(self, keystate: &KeyState) -> Self {
     match self {
       WalkTheDogStateMachine::Ready(state) => state.update(keystate).into(),
@@ -70,7 +73,14 @@ impl From<ReadyEndState> for WalkTheDogStateMachine {
   }
 }
 impl WalkTheDogState<Ready> {
-  fn update(self, keystate: &KeyState) -> ReadyEndState {
+  fn new(walk: Walk) -> Self {
+    WalkTheDogState {
+      _state: Ready,
+      walk,
+    }
+  }
+  fn update(mut self, keystate: &KeyState) -> ReadyEndState {
+    self.walk.boy.update();
     if keystate.is_pressed("ArrowRight") {
       ReadyEndState::Complete(self.start_running())
     } else {
@@ -191,25 +201,22 @@ impl Game for WalkTheDog {
         let background_width = background.width() as i16;
         let starting_obstacles = stone_and_platform(stone.clone(), sprite_sheet.clone(), 0);
         let timeline = rightmost(&starting_obstacles);
-        let machine = WalkTheDogStateMachine::Ready(WalkTheDogState {
-          _state: Ready,
-          walk: Walk {
-            boy: rhb,
-            backgrounds: [
-              Image::new(background.clone(), Point { x: 0, y: 0 }),
-              Image::new(
-                background,
-                Point {
-                  x: background_width,
-                  y: 0,
-                },
-              ),
-            ],
-            obstacles: starting_obstacles,
-            obstacle_sheet: sprite_sheet,
-            stone,
-            timeline,
-          },
+        let machine = WalkTheDogStateMachine::new(Walk {
+          boy: rhb,
+          backgrounds: [
+            Image::new(background.clone(), Point { x: 0, y: 0 }),
+            Image::new(
+              background,
+              Point {
+                x: background_width,
+                y: 0,
+              },
+            ),
+          ],
+          obstacles: starting_obstacles,
+          obstacle_sheet: sprite_sheet,
+          stone,
+          timeline,
         });
         Ok(Box::new(WalkTheDog {
           machine: Some(machine),
