@@ -77,6 +77,7 @@ impl From<ReadyEndState> for WalkTheDogStateMachine {
 }
 impl WalkTheDogState<Ready> {
   fn new(walk: Walk) -> Self {
+    browser::draw_ui("<p id='score'>0</>").unwrap();
     WalkTheDogState {
       _state: Ready,
       walk,
@@ -137,6 +138,8 @@ impl WalkTheDogState<Walking> {
     } else {
       self.walk.timeline += walking_speed;
     }
+    self.walk.score += 1;
+
     if self.walk.knocked_out() {
       WalkingEndState::Complete(self.end_game())
     } else {
@@ -225,6 +228,7 @@ pub struct Walk {
   obstacle_sheet: Rc<SpriteSheet>,
   stone: HtmlImageElement,
   timeline: i16,
+  score: u16,
 }
 
 impl Walk {
@@ -261,6 +265,9 @@ impl Walk {
       .obstacles
       .iter()
       .for_each(|obstacle| obstacle.draw(renderer));
+    browser::find_html_element_by_id("score")
+      .map(|element| element.set_inner_html(&format!("Score: {}", self.score)))
+      .unwrap();
   }
   fn knocked_out(&self) -> bool {
     self.boy.knocked_out()
@@ -275,6 +282,7 @@ impl Walk {
       obstacle_sheet: walk.obstacle_sheet,
       stone: walk.stone,
       timeline,
+      score: 0,
     }
   }
 }
@@ -326,6 +334,7 @@ impl Game for WalkTheDog {
           obstacle_sheet: sprite_sheet,
           stone,
           timeline,
+          score: 0,
         });
         Ok(Box::new(WalkTheDog {
           machine: Some(machine),
