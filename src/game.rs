@@ -145,7 +145,7 @@ impl WalkTheDogState<Walking> {
   }
   fn end_game(self) -> WalkTheDogState<GameOver> {
     let receiver = browser::draw_ui("<button id='new_game'>New Game</button>")
-      .and_then(|_unit| browser::find_element_by_id("new_game"))
+      .and_then(|_unit| browser::find_html_element_by_id("new_game"))
       .map(|element| engine::add_click_handler(element))
       .unwrap();
     WalkTheDogState {
@@ -181,7 +181,7 @@ impl WalkTheDogState<GameOver> {
     browser::hide_ui();
     WalkTheDogState {
       _state: Ready,
-      walk: self.walk,
+      walk: Walk::reset(self.walk),
     }
   }
 }
@@ -269,7 +269,7 @@ impl Walk {
     let starting_obstacles = stone_and_platform(walk.stone.clone(), walk.obstacle_sheet.clone(), 0);
     let timeline = rightmost(&starting_obstacles);
     Walk {
-      boy: walk.boy,
+      boy: RedHatBoy::reset(walk.boy),
       backgrounds: walk.backgrounds,
       obstacles: starting_obstacles,
       obstacle_sheet: walk.obstacle_sheet,

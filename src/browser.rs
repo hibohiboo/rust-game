@@ -136,7 +136,7 @@ pub fn hide_ui() -> Result<()> {
   if let Some(child) = ui.first_child() {
     ui.remove_child(&child)
       .map(|_removed_child| ())
-      .map_err(|err| anyhow!("Failed to remove child: {:#?}", err))
+      .map_err(|err| anyhow!("Failed to remofve child: {:#?}", err))
       .and_then(|_unit| {
         canvas()?
           .focus()
@@ -152,7 +152,7 @@ fn find_ui() -> Result<web_sys::Element> {
     .ok_or_else(|| anyhow!("No UI Element Found with ID 'ui'"))
 }
 
-pub fn find_element_by_id(id: &str) -> Result<HtmlElement> {
+pub fn find_html_element_by_id(id: &str) -> Result<HtmlElement> {
   document().and_then(|doc| {
     doc
       .get_element_by_id(id)
