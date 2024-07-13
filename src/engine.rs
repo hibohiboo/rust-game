@@ -336,7 +336,7 @@ fn prepare_input() -> Result<UnboundedReceiver<KeyPress>> {
   let keyup_sender = Rc::clone(&keydown_sender);
 
   let onkeydown = browser::closure_wrap(Box::new(move |keycode: web_sys::KeyboardEvent| {
-    log!("{}", &format!("Key Down: {}", keycode.key()));
+    log!("{}", &format!("Key Down: {}", keycode.code()));
     let _ = keydown_sender
       .borrow_mut()
       .start_send(KeyPress::KeyDown(keycode));
