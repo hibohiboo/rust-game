@@ -123,3 +123,31 @@ pub fn now() -> Result<f64> {
       .now(),
   )
 }
+
+pub fn draw_ui(html: &str) -> Result<()> {
+  document()
+    .and_then(|doc| {
+      doc
+        .get_element_by_id("ui")
+        .ok_or_else(|| anyhow!("No UI Element Found with ID 'ui'"))
+    })
+    .and_then(|ui| {
+      ui.insert_adjacent_html("afterbegin", html)
+        .map_err(|err| anyhow!("Failed to insert HTML: {:#?}", err))
+    })
+}
+
+pub fn hide_ui() -> Result<()> {
+  let ui = document().and_then(|doc| {
+    doc
+      .get_element_by_id("ui")
+      .ok_or_else(|| anyhow!("No UI Element Found with ID 'ui'"))
+  })?;
+  if let Some(child) = ui.first_child() {
+    ui.remove_child(&child)
+      .map(|_removed_child| ())
+      .map_err(|err| anyhow!("Failed to remove child: {:#?}", err))
+  } else {
+    Ok(())
+  }
+}
