@@ -12,8 +12,8 @@ use std::rc::Rc;
 use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::CanvasRenderingContext2d;
 use web_sys::HtmlImageElement;
+use web_sys::{CanvasRenderingContext2d, HtmlElement};
 // use wasm_bindgen_test::__rt::browser;
 
 #[derive(Clone, Copy, Default)]
@@ -383,7 +383,7 @@ impl Image {
   pub fn bounding_box(&self) -> &Rect {
     &self.bounding_box
   }
-  pub fn move_horizonatally(&mut self, distance: i16) {
+  pub fn move_horizontally(&mut self, distance: i16) {
     self.set_x(self.bounding_box.position.x + distance);
   }
 
@@ -437,5 +437,17 @@ impl Audio {
 }
 #[derive(Clone)]
 pub struct Sound {
-  buffer: web_sys::AudioBuffer,
+  pub buffer: web_sys::AudioBuffer,
+}
+
+pub fn add_click_handler(element: HtmlElement) -> UnboundedReceiver<()> {
+  let (mut click_sender, click_receiver) = unbounded();
+  let on_click = browser::closure_wrap(Box::new(move || {
+    if let Err(err) = click_sender.start_send(()) {
+      error!("Could not send click message {:#?}", err);
+    }
+  }) as Box<dyn FnMut()>);
+  element.set_onclick(Some(on_click.as_ref().unchecked_ref()));
+  on_click.forget();
+  click_receiver
 }

@@ -3,7 +3,7 @@ use anyhow::{anyhow, Result};
 use js_sys::ArrayBuffer;
 use wasm_bindgen::{closure::WasmClosure, closure::WasmClosureFnOnce, prelude::Closure, JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement, Response, Window};
+use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement, HtmlElement, Response, Window};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -122,4 +122,45 @@ pub fn now() -> Result<f64> {
       .ok_or_else(|| anyhow!("Performance object not found"))?
       .now(),
   )
+}
+
+pub fn draw_ui(html: &str) -> Result<()> {
+  find_ui().and_then(|ui| {
+    ui.insert_adjacent_html("afterbegin", html)
+      .map_err(|err| anyhow!("Failed to insert HTML: {:#?}", err))
+  })
+}
+
+pub fn hide_ui() -> Result<()> {
+  let ui = find_ui()?;
+  if let Some(child) = ui.first_child() {
+    ui.remove_child(&child)
+      .map(|_removed_child| ())
+      .map_err(|err| anyhow!("Failed to remofve child: {:#?}", err))
+      .and_then(|_unit| {
+        canvas()?
+          .focus()
+          .map_err(|err| anyhow!("Failed to focus canvas: {:#?}", err))
+      })
+  } else {
+    Ok(())
+  }
+}
+fn find_ui() -> Result<web_sys::Element> {
+  document()?
+    .get_element_by_id("ui")
+    .ok_or_else(|| anyhow!("No UI Element Found with ID 'ui'"))
+}
+
+pub fn find_html_element_by_id(id: &str) -> Result<HtmlElement> {
+  document().and_then(|doc| {
+    doc
+      .get_element_by_id(id)
+      .ok_or_else(|| anyhow!("No Element Found with ID '{}'", id))
+      .and_then(|element| {
+        element
+          .dyn_into::<web_sys::HtmlElement>()
+          .map_err(|element| anyhow!("Error converting {:#?} to HtmlElement", element))
+      })
+  })
 }
