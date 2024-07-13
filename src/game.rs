@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{io::Read, rc::Rc};
 
 use self::red_hat_boy_states::*;
 use crate::{
@@ -15,16 +15,66 @@ use web_sys::HtmlImageElement;
 const HEIGHT: i16 = 600;
 const TIMELINE_MINIMUM: i16 = 1000;
 const OBSTACLE_BUFFER: i16 = 20; // ちょうどよさそうだった値。セグメント同士が近づきすぎないための値
-pub enum WalkTheDog {
-  Loading,
-  Loaded(Walk),
+pub struct WalkTheDog {
+  machine: Option<WalkTheDogStateMachine>,
 }
-
 impl WalkTheDog {
   pub fn new() -> Self {
-    WalkTheDog::Loading
+    WalkTheDog { machine: None }
   }
 }
+
+enum WalkTheDogStateMachine {
+  Ready(WalkTheDogState<Ready>),
+  Walking(WalkTheDogState<Walking>),
+  GameOver(WalkTheDogState<GameOver>),
+}
+impl WalkTheDogStateMachine{
+  fn update(self,keystate:&KeyState)->Self{
+    match self {
+      WalkTheDogStateMachine::Ready(state)=>state.update(keystate).into(),
+      WalkTheDogStateMachine::Walking(state)=>state.update(keystate).into(),
+      WalkTheDogStateMachine::GameOver(state)=>state.update(keystate).into(),
+    }
+}
+struct WalkTheDogState<T> {
+  _state: T,
+  walk: Walk,
+}
+struct Ready;
+struct Walking;
+struct GameOver;
+impl WalkTheDogState<Ready> {
+  fn update(self, keystate: &KeyState) -> WalkTheDogState<Walking> {
+    self
+  }
+}
+impl WalkTheDogState<Walking> {
+  fn update(self, keystate: &KeyState) -> WalkTheDogState<Walking> {
+    self
+  }
+}
+impl WalkTheDogState<GameOver> {
+  fn update(self, keystate: &KeyState) -> WalkTheDogState<GameOver> {
+    self
+  }
+}
+impl From<WalkTheDogState<Ready>> for WalkTheDogStateMachine {
+  fn from(state: WalkTheDogState<Ready>) -> Self {
+    WalkTheDogStateMachine::Ready(state)
+  }
+}
+impl From<WalkTheDogState<Walking>> for WalkTheDogStateMachine {
+  fn from(state: WalkTheDogState<Walking>) -> Self {
+    WalkTheDogStateMachine::Walking(state)
+  }
+}
+impl From<WalkTheDogState<GameOver>> for WalkTheDogStateMachine {
+  fn from(state: WalkTheDogState<GameOver>) -> Self {
+    WalkTheDogStateMachine::GameOver(state)
+  }
+}
+
 
 pub struct Walk {
   boy: RedHatBoy,
@@ -64,8 +114,8 @@ impl Walk {
 #[async_trait(?Send)]
 impl Game for WalkTheDog {
   async fn initialize(&self) -> Result<Box<dyn Game>> {
-    match self {
-      WalkTheDog::Loading => {
+    match self.machine {
+      None => {
         let json = browser::fetch_json("rhb.json").await?;
         let background = engine::load_image("BG.png").await?;
         let stone = engine::load_image("Stone.png").await?;
@@ -92,29 +142,35 @@ impl Game for WalkTheDog {
         let background_width = background.width() as i16;
         let starting_obstacles = stone_and_platform(stone.clone(), sprite_sheet.clone(), 0);
         let timeline = rightmost(&starting_obstacles);
-        Ok(Box::new(WalkTheDog::Loaded(Walk {
-          boy: rhb,
-          backgrounds: [
-            Image::new(background.clone(), Point { x: 0, y: 0 }),
-            Image::new(
-              background,
-              Point {
-                x: background_width,
-                y: 0,
-              },
-            ),
-          ],
-          obstacles: starting_obstacles,
-          obstacle_sheet: sprite_sheet,
-          stone,
-          timeline,
-        })))
+        let machine = WalkTheDogStateMachine::Ready(WalkTheDogState {
+          _state: Ready,
+          walk: Walk {
+            boy: rhb,
+            backgrounds: [
+              Image::new(background.clone(), Point { x: 0, y: 0 }),
+              Image::new(
+                background,
+                Point {
+                  x: background_width,
+                  y: 0,
+                },
+              ),
+            ],
+            obstacles: starting_obstacles,
+            obstacle_sheet: sprite_sheet,
+            stone,
+            timeline,
+          },
+        });
+        Ok(Box::new(WalkTheDog {
+          machine: Some(machine),
+        }))
       }
-      WalkTheDog::Loaded(_) => Err(anyhow!("Game already initialized")),
     }
   }
   fn update(&mut self, keystate: &KeyState) {
-    if let WalkTheDog::Loaded(walk) = self {
+    if let Some(machine) = self.machine.take() {
+      self.machine.replace(machine.update(keystate));
       // 同時押しに対応するため、elseを使わずifで分岐している
       if keystate.is_pressed("ArrowRight") {
         walk.boy.run_right();
@@ -160,6 +216,7 @@ impl Game for WalkTheDog {
         walk.timeline += velocity;
       }
     }
+    assert!(self.machine.is_some());
   }
   fn draw(&self, renderer: &Renderer) {
     renderer.clear(&Rect {
