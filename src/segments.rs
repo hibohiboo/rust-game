@@ -80,3 +80,37 @@ pub fn platform_and_stone(stone: HtmlImageElement, sprite_sheet: Rc<SpriteSheet>
     )),
   ]
 }
+
+pub fn platform_only(sprite_sheet: Rc<SpriteSheet>, offset_x: i16) -> Vec<Box<dyn Obstacle>> {
+  const INITIAL_PLATFORM_OFFSET: i16 = 200;
+  vec![Box::new(create_floating_platform(
+    sprite_sheet,
+    Point {
+      x: offset_x + INITIAL_PLATFORM_OFFSET,
+      y: HIGH_PLATFORM,
+    },
+  ))]
+}
+
+pub fn stone_only(stone: HtmlImageElement, offset_x: i16) -> Vec<Box<dyn Obstacle>> {
+  const INITIAL_STONE_OFFSET: i16 = 400;
+  vec![Box::new(Barrier::new(Image::new(
+    stone,
+    Point {
+      x: offset_x + INITIAL_STONE_OFFSET,
+      y: STONE_ON_GROUND,
+    },
+  )))]
+}
+pub fn sliding_platform(sprite_sheet: Rc<SpriteSheet>, offset_x: i16) -> Vec<Box<dyn Obstacle>> {
+  const INITIAL_PLATFORM_OFFSET: i16 = 200;
+  vec![Box::new(Platform::new(
+    sprite_sheet,
+    Point {
+      x: offset_x + INITIAL_PLATFORM_OFFSET,
+      y: HIGH_PLATFORM,
+    },
+    &["16.png"],
+    &[Rect::new_from_x_y(0, 0, PLATFORM_WIDTH, PLATFORM_HEIGHT)],
+  ))]
+}

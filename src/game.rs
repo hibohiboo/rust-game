@@ -4,7 +4,7 @@ use self::red_hat_boy_states::*;
 use crate::{
   browser,
   engine::{self, Audio, Cell, Game, Image, KeyState, Point, Rect, Renderer, Sheet, Sound, SpriteSheet},
-  segments::{platform_and_stone, stone_and_platform},
+  segments::{platform_and_stone, platform_only, sliding_platform, stone_and_platform, stone_only},
 };
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -182,7 +182,7 @@ impl WalkTheDogState<GameOver> {
     }
   }
   fn new_game(self) -> WalkTheDogState<Ready> {
-    browser::hide_ui();
+    let _ = browser::hide_ui();
     WalkTheDogState {
       _state: Ready,
       walk: Walk::reset(self.walk),
@@ -238,7 +238,7 @@ impl Walk {
   }
   fn generate_next_segment(&mut self) {
     let mut rng = thread_rng();
-    let next_segmenet = rng.gen_range(0..2);
+    let next_segmenet = rng.gen_range(0..5);
     let mut next_obstacles = match next_segmenet {
       0 => stone_and_platform(
         self.stone.clone(),
@@ -250,6 +250,9 @@ impl Walk {
         self.obstacle_sheet.clone(),
         self.timeline + OBSTACLE_BUFFER,
       ),
+      2 => platform_only(self.obstacle_sheet.clone(), self.timeline + OBSTACLE_BUFFER),
+      3 => stone_only(self.stone.clone(), self.timeline + OBSTACLE_BUFFER),
+      4 => sliding_platform(self.obstacle_sheet.clone(), self.timeline + OBSTACLE_BUFFER),
       _ => vec![],
     };
 
