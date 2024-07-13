@@ -1,3 +1,7 @@
+The font is the Kenny Future Narrow font from www.kenney.nl.
+
+The button is from https://www.gameart2d.com/. Both are CC0 licensed.
+
 All assets used with permission
 
 background_sound.mp3 is from https://gamesounds.xyz/?dir=OpenBundle/Background%20Music%20and%20Loops
