@@ -99,7 +99,41 @@ impl WalkTheDogState<Ready> {
   }
 }
 impl WalkTheDogState<Walking> {
-  fn update(self, keystate: &KeyState) -> WalkTheDogState<Walking> {
+  fn update(mut self, keystate: &KeyState) -> WalkTheDogState<Walking> {
+    if keystate.is_pressed("Space") {
+      self.walk.boy.jump();
+    }
+
+    if keystate.is_pressed("ArrowDown") {
+      self.walk.boy.slide();
+    }
+
+    self.walk.boy.update();
+
+    let walking_speed = self.walk.velocity();
+    let [first_background, second_background] = &mut self.walk.backgrounds;
+    first_background.move_horizontally(walking_speed);
+    second_background.move_horizontally(walking_speed);
+
+    if first_background.right() < 0 {
+      first_background.set_x(second_background.right());
+    }
+    if second_background.right() < 0 {
+      second_background.set_x(first_background.right());
+    }
+
+    self.walk.obstacles.retain(|obstacle| obstacle.right() > 0);
+
+    self.walk.obstacles.iter_mut().for_each(|obstacle| {
+      obstacle.move_horizontally(walking_speed);
+      obstacle.check_intersection(&mut self.walk.boy);
+    });
+
+    if self.walk.timeline < TIMELINE_MINIMUM {
+      self.walk.generate_next_segment();
+    } else {
+      self.walk.timeline += walking_speed;
+    }
     self
   }
 }
@@ -766,7 +800,7 @@ impl Platform {
 pub trait Obstacle {
   fn check_intersection(&self, boy: &mut RedHatBoy);
   fn draw(&self, renderer: &Renderer);
-  fn move_horizonatally(&mut self, velocity: i16);
+  fn move_horizontally(&mut self, velocity: i16);
   fn right(&self) -> i16;
 }
 
@@ -792,7 +826,7 @@ impl Obstacle for Platform {
       x += sprite.frame.w;
     });
   }
-  fn move_horizonatally(&mut self, x: i16) {
+  fn move_horizontally(&mut self, x: i16) {
     self.position.x += x;
     self.bounding_boxes.iter_mut().for_each(|bounding_box| {
       bounding_box.set_x(bounding_box.position.x + x);
@@ -837,8 +871,8 @@ impl Obstacle for Barrier {
   fn draw(&self, renderer: &Renderer) {
     self.image.draw(renderer);
   }
-  fn move_horizonatally(&mut self, x: i16) {
-    self.image.move_horizonatally(x);
+  fn move_horizontally(&mut self, x: i16) {
+    self.image.move_horizontally(x);
   }
   fn right(&self) -> i16 {
     self.image.right()

@@ -383,7 +383,7 @@ impl Image {
   pub fn bounding_box(&self) -> &Rect {
     &self.bounding_box
   }
-  pub fn move_horizonatally(&mut self, distance: i16) {
+  pub fn move_horizontally(&mut self, distance: i16) {
     self.set_x(self.bounding_box.position.x + distance);
   }
 
