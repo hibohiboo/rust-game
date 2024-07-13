@@ -125,24 +125,14 @@ pub fn now() -> Result<f64> {
 }
 
 pub fn draw_ui(html: &str) -> Result<()> {
-  document()
-    .and_then(|doc| {
-      doc
-        .get_element_by_id("ui")
-        .ok_or_else(|| anyhow!("No UI Element Found with ID 'ui'"))
-    })
-    .and_then(|ui| {
-      ui.insert_adjacent_html("afterbegin", html)
-        .map_err(|err| anyhow!("Failed to insert HTML: {:#?}", err))
-    })
+  find_ui().and_then(|ui| {
+    ui.insert_adjacent_html("afterbegin", html)
+      .map_err(|err| anyhow!("Failed to insert HTML: {:#?}", err))
+  })
 }
 
 pub fn hide_ui() -> Result<()> {
-  let ui = document().and_then(|doc| {
-    doc
-      .get_element_by_id("ui")
-      .ok_or_else(|| anyhow!("No UI Element Found with ID 'ui'"))
-  })?;
+  let ui = find_ui()?;
   if let Some(child) = ui.first_child() {
     ui.remove_child(&child)
       .map(|_removed_child| ())
@@ -150,4 +140,9 @@ pub fn hide_ui() -> Result<()> {
   } else {
     Ok(())
   }
+}
+fn find_ui() -> Result<web_sys::Element> {
+  document()?
+    .get_element_by_id("ui")
+    .ok_or_else(|| anyhow!("No UI Element Found with ID 'ui'"))
 }
