@@ -12,8 +12,8 @@ use std::rc::Rc;
 use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::CanvasRenderingContext2d;
 use web_sys::HtmlImageElement;
+use web_sys::{CanvasRenderingContext2d, HtmlElement};
 // use wasm_bindgen_test::__rt::browser;
 
 #[derive(Clone, Copy, Default)]
@@ -437,10 +437,10 @@ impl Audio {
 }
 #[derive(Clone)]
 pub struct Sound {
-  buffer: web_sys::AudioBuffer,
+  pub buffer: web_sys::AudioBuffer,
 }
 
-pub fn add_click_handler(element: &web_sys::HtmlElement) -> UnboundedReceiver<()> {
+pub fn add_click_handler(element: HtmlElement) -> UnboundedReceiver<()> {
   let (mut click_sender, click_receiver) = unbounded();
   let on_click = browser::closure_wrap(Box::new(move || {
     let _ = click_sender.start_send(());
