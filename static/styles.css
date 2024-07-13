@@ -34,3 +34,32 @@ button:hover {
 button:active {
     background: -244px -60px url('Button.svg');
 }
+
+body{
+    width: 100%;
+}
+.wrapper {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+}
+.controller {
+    display: flex;
+    /* 等間隔で配置 */
+    justify-content: space-around;
+}
+
+.controller > div {
+    width: 30%;
+    font-size: 3rem;
+    text-align: center;
+    border: 5px solid #000;
+    height: 100px;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 3rem;
+    background-color: #000;
+    color: #fff;
+}
