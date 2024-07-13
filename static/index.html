@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>My Rust + Webpack project!</title>
-    <link rel="stylesheet" href="styles.css" type="text/css" media="screen">
-    <link rel="preload" as="image" href="Button.svg">
-    <link rel="preload" as="font" href="kenney_future_narrow-webfont.woff2">
+    <link rel="stylesheet" href="styles.css" type="text/css" media="screen" />
+    <link rel="preload" as="image" href="Button.svg" />
+    <link rel="preload" as="font" href="kenney_future_narrow-webfont.woff2" />
   </head>
   <body>
-    <div id="ui">
-      <button id='new_game'>New Game</button>
+    <div class="wrapper">
+      <div id="ui">
+        <button id="new_game">New Game</button>
+      </div>
+      <canvas id="canvas" width="600" height="600" tabindex="0">
+        Your browser does not support the canvs
+      </canvas>
+      <div class="controller">
+        <div id="jump">Jump</div><div id="sliding">Sliding</div>
+      </div>
     </div>
-    <canvas id="canvas" width="600" height="600" tabindex="0"> Your browser does not support the canvs </canvas>
     <script src="index.js"></script>
   </body>
 </html>
